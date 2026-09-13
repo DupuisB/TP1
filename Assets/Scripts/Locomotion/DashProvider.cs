@@ -24,8 +24,8 @@ namespace LOG8704.Locomotion
         [Tooltip("Maximum distance of a single dash in meters")]
         [SerializeField] private float m_DashDistance = 5.0f;
 
-        [Tooltip("Duration of the dash in seconds (typically 0.15s - 0.25s)")]
-        [SerializeField] private float m_DashDuration = 0.18f;
+        [Tooltip("Duration of the dash in seconds (typically 0.2s)")]
+        [SerializeField] private float m_DashDuration = 0.20f;
 
         [Tooltip("Cooldown period between consecutive dashes in seconds")]
         [SerializeField] private float m_Cooldown = 0.5f;
@@ -144,14 +144,7 @@ namespace LOG8704.Locomotion
             if (m_IsDashing || Time.time < m_LastDashTime + m_Cooldown)
                 return false;
 
-            XROrigin origin = mediator != null ? mediator.xrOrigin : null;
-            if (origin == null)
-            {
-                origin = GetComponentInParent<XROrigin>();
-                if (origin == null)
-                    origin = FindFirstObjectByType<XROrigin>();
-            }
-
+            XROrigin origin = GetXROrigin();
             if (origin == null || origin.Origin == null)
                 return false;
 
@@ -191,18 +184,75 @@ namespace LOG8704.Locomotion
             }
 
             Vector3 destination = origin.Origin.transform.position + dashDirection * targetDistance;
-            m_DashCoroutine = StartCoroutine(PerformDash(origin, destination));
+            m_DashCoroutine = StartCoroutine(PerformDash(origin, destination, null, null));
             return true;
         }
 
-        private IEnumerator PerformDash(XROrigin origin, Vector3 targetPosition)
+        /// <summary>
+        /// Dash directly to a target destination (e.g. from teleport ray) over 0.2s.
+        /// </summary>
+        public bool DashTo(Vector3 targetPosition, Quaternion? targetRotation = null, System.Action onComplete = null)
+        {
+            if (m_IsDashing)
+            {
+                if (m_DashCoroutine != null)
+                    StopCoroutine(m_DashCoroutine);
+            }
+
+            XROrigin origin = GetXROrigin();
+            if (origin == null || origin.Origin == null)
+                return false;
+
+            if (!TryStartLocomotionImmediately())
+                return false;
+
+            // Calculate destination for origin taking into account user's head/body ground offset
+            Vector3 targetOriginPos = targetPosition;
+            if (origin.Camera != null && origin.Origin != null)
+            {
+                Vector3 bodyGroundPos = new Vector3(origin.Camera.transform.position.x, origin.Origin.transform.position.y, origin.Camera.transform.position.z);
+                targetOriginPos = targetPosition + origin.Origin.transform.position - bodyGroundPos;
+            }
+
+            m_DashCoroutine = StartCoroutine(PerformDash(origin, targetOriginPos, targetRotation, onComplete));
+            return true;
+        }
+
+        private XROrigin GetXROrigin()
+        {
+            XROrigin origin = mediator != null ? mediator.xrOrigin : null;
+            if (origin == null)
+            {
+                origin = GetComponentInParent<XROrigin>();
+                if (origin == null)
+                    origin = FindFirstObjectByType<XROrigin>();
+            }
+            return origin;
+        }
+
+        private IEnumerator PerformDash(XROrigin origin, Vector3 targetPosition, Quaternion? targetRotation, System.Action onComplete)
         {
             m_IsDashing = true;
 
-            if (m_VignetteController != null)
+            // Respect global vignette toggle from TP1ComfortManager
+            bool shouldShowVignette = m_VignetteController != null;
+            if (TP1ComfortManager.Instance != null && !TP1ComfortManager.Instance.isVignetteActive)
+            {
+                shouldShowVignette = false;
+            }
+
+            if (shouldShowVignette && m_VignetteController != null)
                 m_VignetteController.BeginTunnelingVignette(this);
 
-            Vector3 originStart = origin.Origin.transform.position;
+            var originTransform = origin.Origin.transform;
+            Vector3 originStart = originTransform.position;
+            Quaternion rotStart = originTransform.rotation;
+
+            // Retrieve CharacterController; keep it ENABLED throughout dash to prevent PhysX position snapback
+            CharacterController cc = origin.Origin != null ? origin.Origin.GetComponent<CharacterController>() : null;
+            if (cc == null && origin.GetComponent<CharacterController>() != null)
+                cc = origin.GetComponent<CharacterController>();
+
             float elapsed = 0f;
 
             while (elapsed < m_DashDuration)
@@ -210,11 +260,42 @@ namespace LOG8704.Locomotion
                 elapsed += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsed / m_DashDuration);
                 float curvedT = m_DashCurve.Evaluate(t);
-                origin.Origin.transform.position = Vector3.Lerp(originStart, targetPosition, curvedT);
+                Vector3 desiredPos = Vector3.Lerp(originStart, targetPosition, curvedT);
+                Vector3 frameStep = desiredPos - originTransform.position;
+
+                if (cc != null && cc.enabled)
+                {
+                    cc.Move(frameStep);
+                }
+                else
+                {
+                    originTransform.position += frameStep;
+                }
+
+                if (targetRotation.HasValue)
+                {
+                    originTransform.rotation = Quaternion.Slerp(rotStart, targetRotation.Value, curvedT);
+                }
+
                 yield return null;
             }
 
-            origin.Origin.transform.position = targetPosition;
+            // Ensure exact target destination without snapback
+            Vector3 finalStep = targetPosition - originTransform.position;
+            if (cc != null && cc.enabled)
+            {
+                cc.Move(finalStep);
+            }
+            originTransform.position = targetPosition;
+
+            if (targetRotation.HasValue)
+            {
+                originTransform.rotation = targetRotation.Value;
+            }
+
+            // Synchronize active colliders with PhysX
+            Physics.SyncTransforms();
+
             m_LastDashTime = Time.time;
             m_IsDashing = false;
 
@@ -223,6 +304,8 @@ namespace LOG8704.Locomotion
 
             TryEndLocomotion();
             m_DashCoroutine = null;
+
+            onComplete?.Invoke();
         }
     }
 }

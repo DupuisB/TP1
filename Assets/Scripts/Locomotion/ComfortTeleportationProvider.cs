@@ -1,0 +1,116 @@
+using System;
+using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation;
+using Unity.XR.CoreUtils;
+
+namespace LOG8704.Locomotion
+{
+    /// <summary>
+    /// Comfort-enhanced TeleportationProvider coordinating Teleport and Dash locomotion.
+    /// Integrates seamlessly with XRI TeleportationArea, ScreenFadeCanvas (Blink), and DashProvider.
+    /// </summary>
+    [AddComponentMenu("LOG8704/Locomotion/Comfort Teleportation Provider")]
+    public class ComfortTeleportationProvider : TeleportationProvider
+    {
+        [Header("Dependencies")]
+        [SerializeField] private DashProvider m_DashProvider;
+        [SerializeField] private ScreenFadeCanvas m_ScreenFade;
+
+        public DashProvider dashProvider
+        {
+            get => m_DashProvider;
+            set => m_DashProvider = value;
+        }
+
+        public ScreenFadeCanvas screenFade
+        {
+            get => m_ScreenFade;
+            set => m_ScreenFade = value;
+        }
+
+        protected override void Awake()
+        {
+            base.Awake();
+
+            if (mediator == null)
+                mediator = GetComponentInParent<UnityEngine.XR.Interaction.Toolkit.Locomotion.LocomotionMediator>() ?? FindFirstObjectByType<UnityEngine.XR.Interaction.Toolkit.Locomotion.LocomotionMediator>();
+
+            if (m_DashProvider == null)
+                m_DashProvider = GetComponent<DashProvider>() ?? FindFirstObjectByType<DashProvider>();
+
+            if (m_ScreenFade == null)
+                m_ScreenFade = ScreenFadeCanvas.Instance ?? FindFirstObjectByType<ScreenFadeCanvas>();
+        }
+
+        /// <summary>
+        /// Intercepts teleport requests to route through the active Locomotion Mode (Dash, Teleport with Blink, Instant).
+        /// </summary>
+        public override bool QueueTeleportRequest(TeleportRequest teleportRequest)
+        {
+            var mgr = TP1ComfortManager.Instance;
+            if (mgr != null)
+            {
+                // In SmoothMove mode, ignore teleport requests from ray
+                if (mgr.isSmoothMoveActive)
+                    return false;
+
+                // In Dash mode, perform rapid 0.20s lerp to target destination
+                if (mgr.isDashActive)
+                {
+                    return ExecuteDashTeleport(teleportRequest);
+                }
+
+                // In Teleport mode, check if Blink option is enabled
+                if (mgr.isTeleportActive)
+                {
+                    if (mgr.isTeleportBlinkEnabled)
+                    {
+                        return ExecuteBlinkTeleport(teleportRequest);
+                    }
+                    else
+                    {
+                        return base.QueueTeleportRequest(teleportRequest);
+                    }
+                }
+            }
+
+            // Fallback default: Blink teleport
+            return ExecuteBlinkTeleport(teleportRequest);
+        }
+
+        private bool ExecuteBlinkTeleport(TeleportRequest request)
+        {
+            if (m_ScreenFade == null)
+                m_ScreenFade = ScreenFadeCanvas.Instance ?? FindFirstObjectByType<ScreenFadeCanvas>();
+
+            if (m_ScreenFade != null)
+            {
+                // Rapid fade-to-black canvas transition (0.08s fade out, jump while black, 0.08s fade in)
+                m_ScreenFade.BlinkFade(() =>
+                {
+                    base.QueueTeleportRequest(request);
+                }, 0.08f);
+
+                return true;
+            }
+
+            // Fallback to instant teleport if no ScreenFadeCanvas in scene
+            return base.QueueTeleportRequest(request);
+        }
+
+        private bool ExecuteDashTeleport(TeleportRequest request)
+        {
+            if (m_DashProvider == null)
+                m_DashProvider = GetComponent<DashProvider>() ?? FindFirstObjectByType<DashProvider>();
+
+            if (m_DashProvider != null)
+            {
+                // Rapid 0.2s smooth interpolation to target destination
+                return m_DashProvider.DashTo(request.destinationPosition, request.destinationRotation);
+            }
+
+            // Fallback to instant if no DashProvider configured
+            return base.QueueTeleportRequest(request);
+        }
+    }
+}
