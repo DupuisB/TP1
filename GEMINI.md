@@ -2,7 +2,7 @@
 
 ## Project Overview
 This project is an academic Virtual Reality (VR) application targeting the **Meta Quest 3**, developed in **Unity 6 (6000.3.22f1)** with the **Universal Render Pipeline (URP 17.3.0)**.
-The primary academic focus is the design and implementation of VR locomotion techniques (teleportation, dashing, turning, and comfort/anti-motion-sickness systems) following clean software engineering principles.
+The primary academic focus is the design and implementation of VR locomotion techniques (teleportation, turning, and comfort/anti-motion-sickness systems) following clean software engineering principles.
 
 ## Core Technology Stack & Architecture
 - **Target Platform**: Meta Quest 3 standalone (Android / Horizon OS) via OpenXR.
@@ -24,14 +24,8 @@ The primary academic focus is the design and implementation of VR locomotion tec
    - Controller rays use `XRRayInteractor` with line renderers configured for parabolic/projectile curve.
 2. **Turning**:
    - Uses `SnapTurnProvider` (default 45° snap) or `ContinuousTurnProvider`.
-3. **Dashing Mechanic (`DashProvider`)**:
-   - Custom provider inheriting from `LocomotionProvider`.
-   - Direction: Controller aim vector or Headset gaze vector projected onto the horizontal ground plane.
-   - Obstacle avoidance: Performs `Physics.SphereCast` or `Physics.CapsuleCast` before moving to avoid wall clipping.
-   - Motion: Rapid non-linear translation (150ms – 250ms duration) with ease-in/ease-out.
-   - Haptics: Triggers controller impulse during dash.
-4. **Comfort & Motion Sickness Mitigation**:
-   - Integrated with `TunnelingVignetteController` to restrict FOV during rapid motion and turning.
+3. **Comfort & Motion Sickness Mitigation**:
+   - Integrated with `TunnelingVignetteController` to restrict FOV during turning and locomotion.
 
 ## Testing Guidelines
 - **Fast Iteration (Desktop)**: Always test locomotion in the Unity Editor using the **XR Device Simulator** (`Left Control / Shift` to manipulate hands, `WASD` to move, `Mouse` to look/aim).
