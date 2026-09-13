@@ -161,13 +161,21 @@ namespace LOG8704.UI
             bool isLookingAtWrist = false;
             if (m_MainCamera != null)
             {
+                // Vector from watch to player camera/eyes
                 Vector3 toCamera = (m_MainCamera.transform.position - transform.position).normalized;
-                // In a world-space UI canvas, transform.forward is the outward normal facing the user
+                // In world-space UI canvas, transform.forward is the outward normal facing the viewer
                 float facingDot = Vector3.Dot(transform.forward, toCamera);
-                bool armRaised = transform.position.y > (m_MainCamera.transform.position.y - 0.70f);
 
-                // When user turns wrist toward eyes, facingDot is > 0.45 (~within 60 degrees)
-                isLookingAtWrist = (facingDot > 0.45f) && armRaised;
+                // Check if camera gaze direction is pointing towards the wrist
+                Vector3 cameraForward = m_MainCamera.transform.forward;
+                Vector3 toWrist = (transform.position - m_MainCamera.transform.position).normalized;
+                float gazeDot = Vector3.Dot(cameraForward, toWrist);
+
+                // Arm height: hand must be raised to chest/viewing level (within 65cm of HMD eye level)
+                bool armRaised = transform.position.y > (m_MainCamera.transform.position.y - 0.65f);
+
+                // User glances at watch: UI faces camera, user looks at wrist, and arm is raised
+                isLookingAtWrist = (facingDot > 0.35f) && (gazeDot > 0.50f) && armRaised;
             }
 
             bool shouldBeVisible = isLookingAtWrist || m_ForceVisibleForDesktop;
@@ -317,17 +325,18 @@ namespace LOG8704.UI
             if (wristAnchor != null)
             {
                 root.transform.SetParent(wristAnchor, false);
-                // Positioned on top of the dorsal forearm behind the left wrist
-                root.transform.localPosition = new Vector3(0.02f, 0.05f, -0.16f);
-                root.transform.localRotation = Quaternion.Euler(-80f, 0f, 15f);
+                // Positioned on the TOP-LEFT of the left controller (smartwatch location)
+                // Angled so the screen faces directly towards the user's eyes when turning wrist inward to check watch
+                root.transform.localPosition = new Vector3(-0.07f, 0.08f, -0.04f);
+                root.transform.localRotation = Quaternion.Euler(35f, -30f, -20f);
             }
-            root.transform.localScale = Vector3.one * 0.00065f;
+            root.transform.localScale = Vector3.one * 0.00045f;
 
             // Canvas setup
             var canvas = root.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
             var rect = root.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(490f, 420f);
+            rect.sizeDelta = new Vector2(460f, 400f);
 
             var canvasGroup = root.AddComponent<CanvasGroup>();
             canvasGroup.alpha = 0f; // Starts hidden until wrist glance
