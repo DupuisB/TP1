@@ -288,7 +288,16 @@ namespace LOG8704.Locomotion
             var actionManagers = FindObjectsByType<ControllerInputActionManager>(FindObjectsSortMode.None);
             foreach (var mgr in actionManagers)
             {
-                mgr.smoothMotionEnabled = (mode == LocomotionMode.SmoothMove);
+                // Only right controller manages locomotion (smooth move vs teleport)
+                // Left controller is strictly for view/turning and must keep smoothMotionEnabled false
+                if (mgr.name.Contains("Right") || (mgr.transform.parent != null && mgr.transform.parent.name.Contains("Right")))
+                {
+                    mgr.smoothMotionEnabled = (mode == LocomotionMode.SmoothMove);
+                }
+                else
+                {
+                    mgr.smoothMotionEnabled = false;
+                }
             }
 
             Debug.Log($"[TP1ComfortManager] Locomotion mode changed to: {mode}");

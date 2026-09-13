@@ -5,6 +5,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.XR.Interaction.Toolkit;
@@ -12,6 +13,8 @@ using UnityEngine.XR.Interaction.Toolkit.Locomotion;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Comfort;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Movement;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation;
+using UnityEngine.XR.Interaction.Toolkit.Locomotion.Turning;
+using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
 using UnityEngine.XR.Interaction.Toolkit.UI;
 using Unity.XR.CoreUtils;
 using TMPro;
@@ -393,13 +396,6 @@ namespace LOG8704.Editor
                 comfortManager = rigInstance.AddComponent<TP1ComfortManager>();
             }
 
-            // Setup LocomotionSelfTest
-            var selfTest = rigInstance.GetComponent<LOG8704.Tests.LocomotionSelfTest>();
-            if (selfTest == null)
-            {
-                selfTest = rigInstance.AddComponent<LOG8704.Tests.LocomotionSelfTest>();
-            }
-
             // Setup Left Wrist UI
             Transform leftController = rigInstance.transform.Find("Camera Offset/Left Controller");
             if (leftController == null)
@@ -422,16 +418,265 @@ namespace LOG8704.Editor
                 if (existingWrist != null)
                     UnityEngine.Object.DestroyImmediate(existingWrist.gameObject);
 
-                WristUIController.CreateWristUI(leftController);
-                Debug.Log("[TP1ArenaBuilder] Wrist UI created on Left Controller.");
+                var wristController = WristUIController.CreateWristUI(leftController);
+
+                // Load custom 256x256 UI icons
+                var walkSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Textures/Icons/icon_walk.png");
+                var teleSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Textures/Icons/icon_teleport.png");
+                var dashSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Textures/Icons/icon_dash.png");
+                var blinkSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Textures/Icons/icon_blink.png");
+                var vigSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Textures/Icons/icon_vignette.png");
+                var turnSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Textures/Icons/icon_turn.png");
+
+                wristController.SetSprites(walkSprite, teleSprite, dashSprite, blinkSprite, vigSprite, turnSprite);
+
+                var soWrist = new SerializedObject(wristController);
+                soWrist.Update();
+                var walkProp = soWrist.FindProperty("m_WalkSprite");
+                if (walkProp != null) walkProp.objectReferenceValue = walkSprite;
+                var teleProp = soWrist.FindProperty("m_TeleportSprite");
+                if (teleProp != null) teleProp.objectReferenceValue = teleSprite;
+                var dashProp = soWrist.FindProperty("m_DashSprite");
+                if (dashProp != null) dashProp.objectReferenceValue = dashSprite;
+                var blinkProp = soWrist.FindProperty("m_BlinkSprite");
+                if (blinkProp != null) blinkProp.objectReferenceValue = blinkSprite;
+                var vigProp = soWrist.FindProperty("m_VignetteSprite");
+                if (vigProp != null) vigProp.objectReferenceValue = vigSprite;
+                var turnProp = soWrist.FindProperty("m_TurnSprite");
+                if (turnProp != null) turnProp.objectReferenceValue = turnSprite;
+                soWrist.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(wristController);
+
+                Debug.Log("[TP1ArenaBuilder] Forearm Wrist UI created on Left Controller with 6 custom icons.");
             }
             else
             {
                 Debug.LogWarning("[TP1ArenaBuilder] Left Controller transform not found for Wrist UI attachment!");
             }
 
-            Debug.Log("[TP1ArenaBuilder] XR Origin Rig configured with CharacterController, ComfortTeleportation, Dash, Vignette, and Wrist UI.");
+            // Configure Joystick Assignments: Left Stick = View Only, Right Stick = Locomotion Only
+            ConfigureJoystickAssignments(rigInstance);
+
+            Debug.Log("[TP1ArenaBuilder] XR Origin Rig configured with CharacterController, ComfortTeleportation, Dash, Vignette, Forearm Wrist UI, and Joystick Mappings.");
             return rigInstance;
+        }
+
+        private static InputActionReference FindActionReference(string mapName, string actionName)
+        {
+            const string inputAssetPath = "Assets/Samples/XR Interaction Toolkit/3.5.1/Starter Assets/XRI Default Input Actions.inputactions";
+            var allAssets = AssetDatabase.LoadAllAssetsAtPath(inputAssetPath);
+            foreach (var asset in allAssets)
+            {
+                if (asset is InputActionReference actionRef && actionRef.action != null)
+                {
+                    if (string.Equals(actionRef.action.name, actionName, StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(actionRef.action.actionMap?.name, mapName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return actionRef;
+                    }
+                }
+            }
+            Debug.LogWarning($"[TP1ArenaBuilder] InputActionReference not found for {mapName}/{actionName}");
+            return null;
+        }
+
+        private static void ConfigureJoystickAssignments(GameObject rigInstance)
+        {
+            var mediator = rigInstance.GetComponentInChildren<LocomotionMediator>(true);
+            var locomotionObj = rigInstance.transform.Find("Locomotion");
+            GameObject locomotionHost = locomotionObj != null ? locomotionObj.gameObject : rigInstance;
+
+            // Load Input Action References from Starter Assets
+            var leftTurnAction = FindActionReference("XRI Left Locomotion", "Turn");
+            var leftSnapTurnAction = FindActionReference("XRI Left Locomotion", "Snap Turn");
+            var rightMoveAction = FindActionReference("XRI Right Locomotion", "Move");
+            var rightTeleportModeAction = FindActionReference("XRI Right Locomotion", "Teleport Mode");
+            var rightTeleportModeCancelAction = FindActionReference("XRI Right Locomotion", "Teleport Mode Cancel");
+
+            var cam = rigInstance.GetComponentInChildren<Camera>(true);
+            Transform headTransform = cam != null ? cam.transform : rigInstance.transform;
+
+            // 1. ContinuousMoveProvider: Exclusively on RIGHT Joystick (Translation only, no rotation)
+            var moveProvider = locomotionHost.GetComponentInChildren<ContinuousMoveProvider>(true);
+            if (moveProvider == null)
+            {
+                var moveObj = new GameObject("Continuous Move");
+                moveObj.transform.SetParent(locomotionHost.transform, false);
+                moveProvider = moveObj.AddComponent<ContinuousMoveProvider>();
+            }
+            moveProvider.mediator = mediator;
+
+            var soMove = new SerializedObject(moveProvider);
+            soMove.Update();
+            var moveSpeedProp = soMove.FindProperty("m_MoveSpeed");
+            if (moveSpeedProp != null) moveSpeedProp.floatValue = 4.0f;
+            var strafeProp = soMove.FindProperty("m_EnableStrafe");
+            if (strafeProp != null) strafeProp.boolValue = true;
+            var forwardProp = soMove.FindProperty("m_ForwardSource");
+            if (forwardProp != null) forwardProp.objectReferenceValue = headTransform;
+
+            // Left Stick: Disabled for translation
+            var leftMoveMode = soMove.FindProperty("m_LeftHandMoveInput.m_InputSourceMode");
+            if (leftMoveMode != null) leftMoveMode.intValue = 0; // Unused
+            var leftMoveRef = soMove.FindProperty("m_LeftHandMoveInput.m_InputActionReference");
+            if (leftMoveRef != null) leftMoveRef.objectReferenceValue = null;
+
+            // Right Stick: Enabled for translation
+            var rightMoveMode = soMove.FindProperty("m_RightHandMoveInput.m_InputSourceMode");
+            if (rightMoveMode != null) rightMoveMode.intValue = 1; // InputActionReference
+            var rightMoveRef = soMove.FindProperty("m_RightHandMoveInput.m_InputActionReference");
+            if (rightMoveRef != null) rightMoveRef.objectReferenceValue = rightMoveAction;
+
+            soMove.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(moveProvider);
+
+            // 2. SnapTurnProvider: Exclusively on LEFT Joystick (Rotation only, no translation)
+            var snapTurn = locomotionHost.GetComponentInChildren<SnapTurnProvider>(true);
+            if (snapTurn == null)
+            {
+                var snapObj = new GameObject("Snap Turn");
+                snapObj.transform.SetParent(locomotionHost.transform, false);
+                snapTurn = snapObj.AddComponent<SnapTurnProvider>();
+            }
+            snapTurn.mediator = mediator;
+
+            var soSnap = new SerializedObject(snapTurn);
+            soSnap.Update();
+            var turnAmountProp = soSnap.FindProperty("m_TurnAmount");
+            if (turnAmountProp != null) turnAmountProp.floatValue = 45.0f;
+            var debounceProp = soSnap.FindProperty("m_DebounceTime");
+            if (debounceProp != null) debounceProp.floatValue = 0.5f;
+            var enableTurnProp = soSnap.FindProperty("m_EnableTurnLeftRight");
+            if (enableTurnProp != null) enableTurnProp.boolValue = true;
+            var enableAroundProp = soSnap.FindProperty("m_EnableTurnAround");
+            if (enableAroundProp != null) enableAroundProp.boolValue = true;
+
+            // Left Stick: Enabled for Snap Turn
+            var leftSnapMode = soSnap.FindProperty("m_LeftHandTurnInput.m_InputSourceMode");
+            if (leftSnapMode != null) leftSnapMode.intValue = 1; // InputActionReference
+            var leftSnapRef = soSnap.FindProperty("m_LeftHandTurnInput.m_InputActionReference");
+            if (leftSnapRef != null) leftSnapRef.objectReferenceValue = leftSnapTurnAction;
+
+            // Right Stick: Disabled for Snap Turn
+            var rightSnapMode = soSnap.FindProperty("m_RightHandTurnInput.m_InputSourceMode");
+            if (rightSnapMode != null) rightSnapMode.intValue = 0; // Unused
+            var rightSnapRef = soSnap.FindProperty("m_RightHandTurnInput.m_InputActionReference");
+            if (rightSnapRef != null) rightSnapRef.objectReferenceValue = null;
+
+            soSnap.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(snapTurn);
+
+            // 3. ContinuousTurnProvider: Exclusively on LEFT Joystick (Rotation only, no translation)
+            var continuousTurn = locomotionHost.GetComponentInChildren<ContinuousTurnProvider>(true);
+            if (continuousTurn == null)
+            {
+                var contObj = new GameObject("Continuous Turn");
+                contObj.transform.SetParent(locomotionHost.transform, false);
+                continuousTurn = contObj.AddComponent<ContinuousTurnProvider>();
+            }
+            continuousTurn.mediator = mediator;
+
+            var soCont = new SerializedObject(continuousTurn);
+            soCont.Update();
+            var turnSpeedProp = soCont.FindProperty("m_TurnSpeed");
+            if (turnSpeedProp != null) turnSpeedProp.floatValue = 60.0f;
+            var contEnableTurnProp = soCont.FindProperty("m_EnableTurnLeftRight");
+            if (contEnableTurnProp != null) contEnableTurnProp.boolValue = true;
+            var contEnableAroundProp = soCont.FindProperty("m_EnableTurnAround");
+            if (contEnableAroundProp != null) contEnableAroundProp.boolValue = false;
+
+            // Left Stick: Enabled for Continuous Smooth Turn
+            var leftContMode = soCont.FindProperty("m_LeftHandTurnInput.m_InputSourceMode");
+            if (leftContMode != null) leftContMode.intValue = 1; // InputActionReference
+            var leftContRef = soCont.FindProperty("m_LeftHandTurnInput.m_InputActionReference");
+            if (leftContRef != null) leftContRef.objectReferenceValue = leftTurnAction;
+
+            // Right Stick: Disabled for Continuous Turn
+            var rightContMode = soCont.FindProperty("m_RightHandTurnInput.m_InputSourceMode");
+            if (rightContMode != null) rightContMode.intValue = 0; // Unused
+            var rightContRef = soCont.FindProperty("m_RightHandTurnInput.m_InputActionReference");
+            if (rightContRef != null) rightContRef.objectReferenceValue = null;
+
+            soCont.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(continuousTurn);
+
+            // Default to Snap Turn enabled, Continuous Turn disabled
+            snapTurn.enabled = true;
+            continuousTurn.enabled = false;
+
+            // 4. Configure ControllerInputActionManagers on Left & Right Controllers
+            var leftController = rigInstance.transform.Find("Camera Offset/Left Controller");
+            var rightController = rigInstance.transform.Find("Camera Offset/Right Controller");
+
+            if (leftController != null)
+            {
+                var leftActionMgr = leftController.GetComponent<ControllerInputActionManager>();
+                if (leftActionMgr != null)
+                {
+                    var soLeft = new SerializedObject(leftActionMgr);
+                    soLeft.Update();
+                    var moveP = soLeft.FindProperty("m_Move");
+                    if (moveP != null) moveP.objectReferenceValue = null;
+                    var turnP = soLeft.FindProperty("m_Turn");
+                    if (turnP != null) turnP.objectReferenceValue = leftTurnAction;
+                    var snapP = soLeft.FindProperty("m_SnapTurn");
+                    if (snapP != null) snapP.objectReferenceValue = leftSnapTurnAction;
+                    var teleP = soLeft.FindProperty("m_TeleportMode");
+                    if (teleP != null) teleP.objectReferenceValue = null;
+                    var teleCanP = soLeft.FindProperty("m_TeleportModeCancel");
+                    if (teleCanP != null) teleCanP.objectReferenceValue = null;
+                    var smoothMotP = soLeft.FindProperty("m_SmoothMotionEnabled");
+                    if (smoothMotP != null) smoothMotP.boolValue = false;
+                    var smoothTurnP = soLeft.FindProperty("m_SmoothTurnEnabled");
+                    if (smoothTurnP != null) smoothTurnP.boolValue = false;
+                    soLeft.ApplyModifiedPropertiesWithoutUndo();
+                    EditorUtility.SetDirty(leftActionMgr);
+                }
+            }
+
+            if (rightController != null)
+            {
+                var rightActionMgr = rightController.GetComponent<ControllerInputActionManager>();
+                if (rightActionMgr != null)
+                {
+                    var soRight = new SerializedObject(rightActionMgr);
+                    soRight.Update();
+                    var moveP = soRight.FindProperty("m_Move");
+                    if (moveP != null) moveP.objectReferenceValue = rightMoveAction;
+                    var turnP = soRight.FindProperty("m_Turn");
+                    if (turnP != null) turnP.objectReferenceValue = null;
+                    var snapP = soRight.FindProperty("m_SnapTurn");
+                    if (snapP != null) snapP.objectReferenceValue = null;
+                    var teleP = soRight.FindProperty("m_TeleportMode");
+                    if (teleP != null) teleP.objectReferenceValue = rightTeleportModeAction;
+                    var teleCanP = soRight.FindProperty("m_TeleportModeCancel");
+                    if (teleCanP != null) teleCanP.objectReferenceValue = rightTeleportModeCancelAction;
+                    var smoothMotP = soRight.FindProperty("m_SmoothMotionEnabled");
+                    if (smoothMotP != null) smoothMotP.boolValue = false;
+                    var smoothTurnP = soRight.FindProperty("m_SmoothTurnEnabled");
+                    if (smoothTurnP != null) smoothTurnP.boolValue = false;
+                    soRight.ApplyModifiedPropertiesWithoutUndo();
+                    EditorUtility.SetDirty(rightActionMgr);
+                }
+            }
+
+            // 5. Wire locomotion providers into TP1ComfortManager
+            var comfortManager = rigInstance.GetComponent<TP1ComfortManager>();
+            if (comfortManager != null)
+            {
+                var soComfort = new SerializedObject(comfortManager);
+                soComfort.Update();
+                var moveRefProp = soComfort.FindProperty("m_ContinuousMoveProvider");
+                if (moveRefProp != null) moveRefProp.objectReferenceValue = moveProvider;
+                var snapRefProp = soComfort.FindProperty("m_SnapTurnProvider");
+                if (snapRefProp != null) snapRefProp.objectReferenceValue = snapTurn;
+                var contTurnRefProp = soComfort.FindProperty("m_ContinuousTurnProvider");
+                if (contTurnRefProp != null) contTurnRefProp.objectReferenceValue = continuousTurn;
+                soComfort.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(comfortManager);
+            }
+
+            Debug.Log("[TP1ArenaBuilder] Joystick assignments configured: Left = View Only (Snap/Smooth Turn), Right = Locomotion Only (Move/Teleport/Dash).");
         }
 
         private static void SetupEventSystem()

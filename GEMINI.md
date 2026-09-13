@@ -27,8 +27,12 @@ The primary academic focus is the design and implementation of VR locomotion tec
 3. **Comfort & Motion Sickness Mitigation**:
    - Integrated with `TunnelingVignetteController` to restrict FOV during turning and locomotion.
 
-## Testing Guidelines
-- **Fast Iteration (Desktop)**: Always test locomotion in the Unity Editor using the **XR Device Simulator** (`Left Control / Shift` to manipulate hands, `WASD` to move, `Mouse` to look/aim).
+## Testing & Validation Guidelines
+- **Zero Runtime Test Bloat**: Do NOT create automated Play-Mode coroutine test scripts or script-driven remote Play/Stop toggling. These break across domain reloads, disconnect MCP bridges, and cannot evaluate physical VR ergonomics or comfort.
+- **Code & Setup Verification (Agent)**:
+  - Verify C# compilation cleanly with 0 errors via `read_console`.
+  - Maintain reproducible scene construction via `TP1ArenaBuilder.cs`.
+- **Fast Iteration (Desktop Developer)**: Test locomotion and UI ergonomics directly in the Unity Editor using the **XR Device Simulator** (`Left Control / Shift` to manipulate hands, `WASD` to move, `Mouse` to look/aim, `[M]` key to inspect forearm wrist menu).
 - **On-Device Validation (Quest 3)**:
   - Build Android APK via Unity Build Settings (`File ▸ Build Settings`).
   - Deploy and inspect logs using Meta's `metavr` CLI / MCP:
