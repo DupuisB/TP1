@@ -50,6 +50,22 @@ namespace LOG8704.Editor
         {
             Debug.Log("[TP1ArenaBuilder] Starting automated creation of TP1 Test Arena scene...");
 
+            // 0. Preserve existing customized Wrist UI settings before wiping the scene
+            Vector3? preservedWristPos = null;
+            Vector3? preservedWristRot = null;
+            var existingWristInActiveScene = UnityEngine.Object.FindFirstObjectByType<WristUIController>();
+            if (existingWristInActiveScene != null)
+            {
+                preservedWristPos = existingWristInActiveScene.uiLocalPosition;
+                preservedWristRot = existingWristInActiveScene.uiLocalEuler;
+            }
+            else
+            {
+                // Fallback to user-customized dorsal watch position
+                preservedWristPos = new Vector3(-0.04f, -0.2f, -0.2f);
+                preservedWristRot = new Vector3(0f, 100f, 10f);
+            }
+
             // 1. Ensure directories exist
             EnsureDirectory(TargetSceneDir);
             EnsureDirectory(MaterialsDir);
@@ -57,8 +73,10 @@ namespace LOG8704.Editor
             // 2. Create / load materials
             var floorMat = GetOrCreateMaterial("Assets/Materials/M_ArenaFloor.mat", new Color(0.18f, 0.21f, 0.26f), 0.3f);
             var wallMat = GetOrCreateMaterial("Assets/Materials/M_ArenaWall.mat", new Color(0.11f, 0.12f, 0.15f), 0.1f);
-            var obstacleMat = GetOrCreateMaterial("Assets/Materials/M_ArenaObstacle.mat", new Color(0.88f, 0.45f, 0.10f), 0.4f);
-            var obstacleTopMat = GetOrCreateMaterial("Assets/Materials/M_ArenaObstacleTop.mat", new Color(0.65f, 0.15f, 0.15f), 0.2f);
+            var obstacleMat = GetOrCreateMaterial("Assets/Materials/M_ArenaObstacle.mat", new Color(0.85f, 0.15f, 0.15f), 0.3f);
+            var obstacleTopMat = GetOrCreateMaterial("Assets/Materials/M_ArenaObstacleTop.mat", new Color(0.75f, 0.12f, 0.12f), 0.2f);
+            var platformMat = GetOrCreateMaterial("Assets/Materials/M_ArenaPlatform.mat", new Color(0.15f, 0.65f, 0.25f), 0.3f);
+            var platformTopMat = GetOrCreateMaterial("Assets/Materials/M_ArenaPlatformTop.mat", new Color(0.20f, 0.78f, 0.30f), 0.4f);
 
             // 3. Create a fresh scene
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -78,8 +96,11 @@ namespace LOG8704.Editor
             // C. Obstacle Box (blocking joystick move, top ray aimable but rejects teleportation)
             BuildObstacleBox(envRoot.transform, obstacleMat, obstacleTopMat);
 
+            // D. Teleportable Platform Box (elevated platform with valid TeleportationArea)
+            BuildTeleportPlatformBox(envRoot.transform, platformMat, platformTopMat);
+
             // 6. Setup XR Rig and Locomotion
-            var rigInstance = SetupXRRig(scene);
+            var rigInstance = SetupXRRig(scene, preservedWristPos, preservedWristRot);
 
             // 7. Setup EventSystem
             SetupEventSystem();
@@ -243,38 +264,49 @@ namespace LOG8704.Editor
             if (topMat != null)
                 topSurface.GetComponent<Renderer>().sharedMaterial = topMat;
 
-            // Signage / Label on top surface
-            var signObj = new GameObject("SignText");
-            signObj.transform.SetParent(topSurface.transform, false);
-            signObj.transform.localPosition = new Vector3(0f, 0.6f, 0f);
-            signObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            signObj.transform.localScale = Vector3.one * 0.05f;
-
-            var tmp = signObj.AddComponent<TextMeshPro>();
-            tmp.text = "OBSTACLE\n[TELEPORT REJETE]";
-            tmp.fontSize = 24;
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.fontStyle = FontStyles.Bold;
-            tmp.color = Color.white;
-
-            // Signage on front vertical face facing player spawn
-            var frontSignObj = new GameObject("FrontSignText");
-            frontSignObj.transform.SetParent(box.transform, false);
-            frontSignObj.transform.localPosition = new Vector3(0f, 0f, -0.51f);
-            frontSignObj.transform.localRotation = Quaternion.identity;
-            frontSignObj.transform.localScale = Vector3.one * 0.05f;
-
-            var frontTmp = frontSignObj.AddComponent<TextMeshPro>();
-            frontTmp.text = "OBSTACLE BLOC\nPassage Bloque";
-            frontTmp.fontSize = 18;
-            frontTmp.alignment = TextAlignmentOptions.Center;
-            frontTmp.fontStyle = FontStyles.Bold;
-            frontTmp.color = Color.white;
-
             Debug.Log("[TP1ArenaBuilder] Obstacle Box created with vertical colliders and non-teleportable top surface.");
         }
 
-        private static GameObject SetupXRRig(Scene scene)
+        private static void BuildTeleportPlatformBox(Transform parent, Material sideMat, Material topMat)
+        {
+            var platformRoot = new GameObject("Teleport_Platform_Box");
+            platformRoot.transform.SetParent(parent, false);
+            platformRoot.transform.localPosition = new Vector3(5.5f, 0f, 2f);
+
+            float width = 3.2f;
+            float height = 1.2f;
+            float depth = 3.2f;
+
+            // Main platform body collider + mesh (blocks walking through, must teleport/dash on top)
+            var body = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            body.name = "Platform_Body";
+            body.transform.SetParent(platformRoot.transform, false);
+            body.transform.localPosition = new Vector3(0f, height * 0.5f, 0f);
+            body.transform.localScale = new Vector3(width, height, depth);
+
+            if (sideMat != null)
+                body.GetComponent<Renderer>().sharedMaterial = sideMat;
+
+            // Top surface with TeleportationArea (allows valid teleport and dash)
+            var topSurface = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            topSurface.name = "Platform_Top_TeleportSurface";
+            topSurface.transform.SetParent(platformRoot.transform, false);
+            topSurface.transform.localPosition = new Vector3(0f, height + 0.005f, 0f);
+            topSurface.transform.localScale = new Vector3(width, 0.01f, depth);
+
+            if (topMat != null)
+                topSurface.GetComponent<Renderer>().sharedMaterial = topMat;
+
+            // Add TeleportationArea to top surface
+            var teleportArea = topSurface.AddComponent<TeleportationArea>();
+            teleportArea.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
+            teleportArea.matchOrientation = MatchOrientation.WorldSpaceUp;
+            teleportArea.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+
+            Debug.Log("[TP1ArenaBuilder] Teleport Platform Box created with TeleportationArea on top surface.");
+        }
+
+        private static GameObject SetupXRRig(Scene scene, Vector3? initialWristPos = null, Vector3? initialWristRot = null)
         {
             var rigPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(XrOriginPrefabPath);
             if (rigPrefab == null)
@@ -377,13 +409,14 @@ namespace LOG8704.Editor
             comfortTeleport.dashProvider = dashProvider;
             comfortTeleport.screenFade = rigInstance.GetComponentInChildren<ScreenFadeCanvas>(true);
 
-            // Connect scene's floor TeleportationArea to this ComfortTeleportationProvider
-            var floorArea = UnityEngine.Object.FindFirstObjectByType<TeleportationArea>();
-            if (floorArea != null)
+            // Connect scene's floor and platform TeleportationAreas to this ComfortTeleportationProvider
+            var teleportAreas = UnityEngine.Object.FindObjectsByType<TeleportationArea>(FindObjectsSortMode.None);
+            foreach (var area in teleportAreas)
             {
-                floorArea.teleportationProvider = comfortTeleport;
-                floorArea.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
-                floorArea.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+                area.teleportationProvider = comfortTeleport;
+                area.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
+                area.matchOrientation = MatchOrientation.WorldSpaceUp;
+                area.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
             }
 
             // Locate ContinuousMoveProvider
@@ -413,12 +446,21 @@ namespace LOG8704.Editor
 
             if (leftController != null)
             {
-                // Remove existing wrist UI if any
+                // Preserve user-configured position/rotation if existing wrist UI was customized by user
                 var existingWrist = leftController.Find("Wrist_Comfort_UI");
+                Vector3? userPos = initialWristPos;
+                Vector3? userRot = initialWristRot;
                 if (existingWrist != null)
+                {
+                    var wristComp = existingWrist.GetComponent<WristUIController>();
+                    Vector3 currentPos = wristComp != null ? wristComp.uiLocalPosition : existingWrist.localPosition;
+                    Vector3 currentRot = wristComp != null ? wristComp.uiLocalEuler : existingWrist.localEulerAngles;
+                    userPos = currentPos;
+                    userRot = currentRot;
                     UnityEngine.Object.DestroyImmediate(existingWrist.gameObject);
+                }
 
-                var wristController = WristUIController.CreateWristUI(leftController);
+                var wristController = WristUIController.CreateWristUI(leftController, userPos, userRot);
 
                 // Load custom 256x256 UI icons
                 var walkSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Textures/Icons/icon_walk.png");
@@ -443,7 +485,10 @@ namespace LOG8704.Editor
                 var vigProp = soWrist.FindProperty("m_VignetteSprite");
                 if (vigProp != null) vigProp.objectReferenceValue = vigSprite;
                 var turnProp = soWrist.FindProperty("m_TurnSprite");
-                if (turnProp != null) turnProp.objectReferenceValue = turnSprite;
+                var posProp = soWrist.FindProperty("m_UiLocalPosition");
+                if (posProp != null && userPos.HasValue) posProp.vector3Value = userPos.Value;
+                var rotProp = soWrist.FindProperty("m_UiLocalEuler");
+                if (rotProp != null && userRot.HasValue) rotProp.vector3Value = userRot.Value;
                 soWrist.ApplyModifiedPropertiesWithoutUndo();
                 EditorUtility.SetDirty(wristController);
 
@@ -521,9 +566,9 @@ namespace LOG8704.Editor
             var leftMoveRef = soMove.FindProperty("m_LeftHandMoveInput.m_InputActionReference");
             if (leftMoveRef != null) leftMoveRef.objectReferenceValue = null;
 
-            // Right Stick: Enabled for translation
+            // Right Stick: Enabled for translation (InputSourceMode.InputActionReference = 2)
             var rightMoveMode = soMove.FindProperty("m_RightHandMoveInput.m_InputSourceMode");
-            if (rightMoveMode != null) rightMoveMode.intValue = 1; // InputActionReference
+            if (rightMoveMode != null) rightMoveMode.intValue = 2; // InputActionReference
             var rightMoveRef = soMove.FindProperty("m_RightHandMoveInput.m_InputActionReference");
             if (rightMoveRef != null) rightMoveRef.objectReferenceValue = rightMoveAction;
 
@@ -551,9 +596,9 @@ namespace LOG8704.Editor
             var enableAroundProp = soSnap.FindProperty("m_EnableTurnAround");
             if (enableAroundProp != null) enableAroundProp.boolValue = true;
 
-            // Left Stick: Enabled for Snap Turn
+            // Left Stick: Enabled for Snap Turn (InputSourceMode.InputActionReference = 2)
             var leftSnapMode = soSnap.FindProperty("m_LeftHandTurnInput.m_InputSourceMode");
-            if (leftSnapMode != null) leftSnapMode.intValue = 1; // InputActionReference
+            if (leftSnapMode != null) leftSnapMode.intValue = 2; // InputActionReference
             var leftSnapRef = soSnap.FindProperty("m_LeftHandTurnInput.m_InputActionReference");
             if (leftSnapRef != null) leftSnapRef.objectReferenceValue = leftSnapTurnAction;
 
@@ -585,9 +630,9 @@ namespace LOG8704.Editor
             var contEnableAroundProp = soCont.FindProperty("m_EnableTurnAround");
             if (contEnableAroundProp != null) contEnableAroundProp.boolValue = false;
 
-            // Left Stick: Enabled for Continuous Smooth Turn
+            // Left Stick: Enabled for Continuous Smooth Turn (InputSourceMode.InputActionReference = 2)
             var leftContMode = soCont.FindProperty("m_LeftHandTurnInput.m_InputSourceMode");
-            if (leftContMode != null) leftContMode.intValue = 1; // InputActionReference
+            if (leftContMode != null) leftContMode.intValue = 2; // InputActionReference
             var leftContRef = soCont.FindProperty("m_LeftHandTurnInput.m_InputActionReference");
             if (leftContRef != null) leftContRef.objectReferenceValue = leftTurnAction;
 
@@ -617,10 +662,12 @@ namespace LOG8704.Editor
                     soLeft.Update();
                     var moveP = soLeft.FindProperty("m_Move");
                     if (moveP != null) moveP.objectReferenceValue = null;
+                    // Left controller turning is managed directly by SnapTurnProvider / ContinuousTurnProvider and TP1ComfortManager
+                    // Setting m_Turn and m_SnapTurn to null prevents ControllerInputActionManager from disabling them
                     var turnP = soLeft.FindProperty("m_Turn");
-                    if (turnP != null) turnP.objectReferenceValue = leftTurnAction;
+                    if (turnP != null) turnP.objectReferenceValue = null;
                     var snapP = soLeft.FindProperty("m_SnapTurn");
-                    if (snapP != null) snapP.objectReferenceValue = leftSnapTurnAction;
+                    if (snapP != null) snapP.objectReferenceValue = null;
                     var teleP = soLeft.FindProperty("m_TeleportMode");
                     if (teleP != null) teleP.objectReferenceValue = null;
                     var teleCanP = soLeft.FindProperty("m_TeleportModeCancel");
@@ -660,7 +707,7 @@ namespace LOG8704.Editor
                 }
             }
 
-            // 5. Wire locomotion providers into TP1ComfortManager
+            // 5. Wire locomotion providers & input actions into TP1ComfortManager
             var comfortManager = rigInstance.GetComponent<TP1ComfortManager>();
             if (comfortManager != null)
             {
@@ -672,6 +719,10 @@ namespace LOG8704.Editor
                 if (snapRefProp != null) snapRefProp.objectReferenceValue = snapTurn;
                 var contTurnRefProp = soComfort.FindProperty("m_ContinuousTurnProvider");
                 if (contTurnRefProp != null) contTurnRefProp.objectReferenceValue = continuousTurn;
+                var snapActProp = soComfort.FindProperty("m_LeftSnapTurnAction");
+                if (snapActProp != null) snapActProp.objectReferenceValue = leftSnapTurnAction;
+                var contActProp = soComfort.FindProperty("m_LeftTurnAction");
+                if (contActProp != null) contActProp.objectReferenceValue = leftTurnAction;
                 soComfort.ApplyModifiedPropertiesWithoutUndo();
                 EditorUtility.SetDirty(comfortManager);
             }

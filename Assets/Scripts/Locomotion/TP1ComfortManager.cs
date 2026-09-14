@@ -44,6 +44,10 @@ namespace LOG8704.Locomotion
         [SerializeField] private ContinuousTurnProvider m_ContinuousTurnProvider;
         [SerializeField] private TunnelingVignetteController m_VignetteController;
 
+        [Header("Turn Input Action References")]
+        [SerializeField] private InputActionReference m_LeftSnapTurnAction;
+        [SerializeField] private InputActionReference m_LeftTurnAction;
+
         [Header("Initial Configuration")]
         [SerializeField] private LocomotionMode m_InitialLocomotionMode = LocomotionMode.Teleport;
         [SerializeField] private bool m_TeleportBlinkDefault = true;
@@ -376,6 +380,16 @@ namespace LOG8704.Locomotion
 
             if (m_ContinuousTurnProvider != null)
                 m_ContinuousTurnProvider.enabled = isSmooth;
+
+            // Ensure Input Actions are enabled
+            if (!isSmooth && m_LeftSnapTurnAction != null && m_LeftSnapTurnAction.action != null && !m_LeftSnapTurnAction.action.enabled)
+            {
+                m_LeftSnapTurnAction.action.Enable();
+            }
+            if (isSmooth && m_LeftTurnAction != null && m_LeftTurnAction.action != null && !m_LeftTurnAction.action.enabled)
+            {
+                m_LeftTurnAction.action.Enable();
+            }
 
             // Coordinate ControllerInputActionManagers
             var actionManagers = FindObjectsByType<ControllerInputActionManager>(FindObjectsSortMode.None);

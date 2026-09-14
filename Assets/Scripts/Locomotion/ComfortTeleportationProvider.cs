@@ -105,8 +105,15 @@ namespace LOG8704.Locomotion
 
             if (m_DashProvider != null)
             {
-                // Rapid 0.2s smooth interpolation to target destination
-                return m_DashProvider.DashTo(request.destinationPosition, request.destinationRotation);
+                // Only pass targetRotation if the teleport request explicitly requested matching forward direction (e.g. TargetUpAndForward on an Anchor)
+                // For standard WorldSpaceUp, TargetUp, or None (e.g. TeleportationArea on floor/platforms), preserve player heading
+                Quaternion? targetRot = null;
+                if (request.matchOrientation == MatchOrientation.TargetUpAndForward)
+                {
+                    targetRot = request.destinationRotation;
+                }
+
+                return m_DashProvider.DashTo(request.destinationPosition, targetRot);
             }
 
             // Fallback to instant if no DashProvider configured

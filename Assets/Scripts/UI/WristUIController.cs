@@ -22,6 +22,32 @@ namespace LOG8704.UI
         [SerializeField] private CanvasGroup m_CanvasGroup;
         [SerializeField] private bool m_ForceVisibleForDesktop = false;
 
+        [Header("Transform Placement (Smartwatch Offset)")]
+        [Tooltip("Local position relative to Left Controller (X: Left[-]/Right[+], Y: Up[+]/Down[-], Z: Forward[+]/Back[-] along forearm). Defaults to dorsal smartwatch position.")]
+        [SerializeField] private Vector3 m_UiLocalPosition = new Vector3(-0.08f, 0.03f, -0.07f);
+
+        [Tooltip("Local Euler angles relative to Left Controller (X: Pitch, Y: Yaw, Z: Roll). Quarter-turn to dorsal watch face is near Yaw -80° to -90°.")]
+        [SerializeField] private Vector3 m_UiLocalEuler = new Vector3(15f, -80f, -25f);
+
+        [Tooltip("When enabled, changes made to position/rotation in the Inspector take effect immediately in real time, even during Play Mode!")]
+        [SerializeField] private bool m_LiveSyncInEditor = true;
+
+        [Header("Glance Detection (Controller-Based)")]
+        [Tooltip("Local direction on the Left Controller pointing towards the watch face. For the Left Controller, -X is the outer/dorsal wrist, slightly +Y for natural grip angle.")]
+        [SerializeField] private Vector3 m_WatchFacingAxis = new Vector3(-1f, 0.2f, 0f);
+
+        [Tooltip("Minimum dot product between the watch facing axis and vector to HMD (0.35 = ~70° cone).")]
+        [SerializeField] private float m_FacingThreshold = 0.35f;
+
+        [Tooltip("Maximum distance in meters between controller and HMD.")]
+        [SerializeField] private float m_MaxViewingDistance = 0.85f;
+
+        [Tooltip("Minimum distance in meters between controller and HMD.")]
+        [SerializeField] private float m_MinViewingDistance = 0.18f;
+
+        [Tooltip("Maximum vertical drop below HMD in meters (rejects hands resting near hips/legs).")]
+        [SerializeField] private float m_MaxHeightBelowHmd = 0.65f;
+
         [Header("Sprites for Icons")]
         [SerializeField] private Sprite m_WalkSprite;
         [SerializeField] private Sprite m_TeleportSprite;
@@ -104,6 +130,8 @@ namespace LOG8704.UI
 
         private void Start()
         {
+            ApplyTransformOffset();
+
             if (m_CanvasGroup == null)
                 m_CanvasGroup = GetComponent<CanvasGroup>() ?? gameObject.AddComponent<CanvasGroup>();
 
@@ -125,6 +153,10 @@ namespace LOG8704.UI
 
         private void Update()
         {
+#if UNITY_EDITOR
+            UpdateEditorTransformSync();
+#endif
+
             UpdateGlanceVisibility();
 
             if (!m_Subscribed)
@@ -138,6 +170,49 @@ namespace LOG8704.UI
                 RefreshUI();
             }
         }
+
+        public Vector3 uiLocalPosition => m_UiLocalPosition;
+        public Vector3 uiLocalEuler => m_UiLocalEuler;
+
+        public void ApplyTransformOffset()
+        {
+            transform.localPosition = m_UiLocalPosition;
+            transform.localRotation = Quaternion.Euler(m_UiLocalEuler);
+        }
+
+        public void SetTransformOffset(Vector3 pos, Vector3 rotEuler)
+        {
+            m_UiLocalPosition = pos;
+            m_UiLocalEuler = rotEuler;
+            ApplyTransformOffset();
+        }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            ApplyTransformOffset();
+        }
+
+        private void UpdateEditorTransformSync()
+        {
+            if (!m_LiveSyncInEditor) return;
+            if (Application.isPlaying) return; // Prevent VR controller tracking updates from trampling inspector edits during play mode
+
+            // Keep Inspector fields and Scene Transform synchronized
+            // If the user drags the Scene Gizmo, update the inspector values
+            if (transform.hasChanged)
+            {
+                m_UiLocalPosition = transform.localPosition;
+                m_UiLocalEuler = transform.localRotation.eulerAngles;
+                transform.hasChanged = false;
+            }
+            else if (transform.localPosition != m_UiLocalPosition || transform.localRotation != Quaternion.Euler(m_UiLocalEuler))
+            {
+                // If the user typed new numbers into the Inspector, update the transform
+                ApplyTransformOffset();
+            }
+        }
+#endif
 
         private void UpdateGlanceVisibility()
         {
@@ -161,21 +236,32 @@ namespace LOG8704.UI
             bool isLookingAtWrist = false;
             if (m_MainCamera != null)
             {
-                // Vector from watch to player camera/eyes
-                Vector3 toCamera = (m_MainCamera.transform.position - transform.position).normalized;
-                // In world-space UI canvas, transform.forward is the outward normal facing the viewer
-                float facingDot = Vector3.Dot(transform.forward, toCamera);
+                Transform camT = m_MainCamera.transform;
+                // Anchor to the Left Controller transform (parent), completely decoupled from UI offsets/rotations
+                Transform controllerT = transform.parent != null ? transform.parent : transform;
+                Vector3 controllerPos = controllerT.position;
 
-                // Check if camera gaze direction is pointing towards the wrist
-                Vector3 cameraForward = m_MainCamera.transform.forward;
-                Vector3 toWrist = (transform.position - m_MainCamera.transform.position).normalized;
-                float gazeDot = Vector3.Dot(cameraForward, toWrist);
+                // 1. Check watch facing direction (Supination):
+                // -X on the Left Controller points towards the outer/dorsal wrist where the watch sits.
+                Vector3 watchWorldNormal = controllerT.TransformDirection(m_WatchFacingAxis.normalized);
+                Vector3 toCamera = (camT.position - controllerPos).normalized;
+                float facingDot = Vector3.Dot(watchWorldNormal, toCamera);
+                bool isFacingCamera = facingDot > m_FacingThreshold;
 
-                // Arm height: hand must be raised to chest/viewing level (within 65cm of HMD eye level)
-                bool armRaised = transform.position.y > (m_MainCamera.transform.position.y - 0.65f);
+                // 2. Check viewing distance (Hand held in front of chest/face, not resting at side or stretched out):
+                float distanceToHmd = Vector3.Distance(controllerPos, camT.position);
+                bool inViewingDistance = distanceToHmd >= m_MinViewingDistance && distanceToHmd <= m_MaxViewingDistance;
 
-                // User glances at watch: UI faces camera, user looks at wrist, and arm is raised
-                isLookingAtWrist = (facingDot > 0.35f) && (gazeDot > 0.50f) && armRaised;
+                // 3. Check height (Hand raised to chest/chin level, not down at hips):
+                float heightBelowHmd = camT.position.y - controllerPos.y;
+                bool atViewingHeight = heightBelowHmd > -0.30f && heightBelowHmd < m_MaxHeightBelowHmd;
+
+                // 4. Relaxed gaze constraint (Player is looking generally in the wrist's direction):
+                Vector3 toWrist = (controllerPos - camT.position).normalized;
+                float gazeDot = Vector3.Dot(camT.forward, toWrist);
+                bool isLookingTowardWrist = gazeDot > 0.25f;
+
+                isLookingAtWrist = isFacingCamera && inViewingDistance && atViewingHeight && isLookingTowardWrist;
             }
 
             bool shouldBeVisible = isLookingAtWrist || m_ForceVisibleForDesktop;
@@ -189,6 +275,16 @@ namespace LOG8704.UI
                 m_CanvasGroup.blocksRaycasts = interactive;
             }
         }
+
+#if UNITY_EDITOR
+        private void OnDrawGizmosSelected()
+        {
+            Transform controllerT = transform.parent != null ? transform.parent : transform;
+            Gizmos.color = Color.cyan;
+            Vector3 normal = controllerT.TransformDirection(m_WatchFacingAxis.normalized);
+            Gizmos.DrawRay(controllerT.position, normal * 0.15f);
+        }
+#endif
 
         private void TrySubscribe()
         {
@@ -319,16 +415,19 @@ namespace LOG8704.UI
         /// <summary>
         /// Procedural generator to construct the Forearm Holographic Gauntlet UI hierarchy.
         /// </summary>
-        public static WristUIController CreateWristUI(Transform wristAnchor)
+        public static WristUIController CreateWristUI(Transform wristAnchor, Vector3? initialPos = null, Vector3? initialRotEuler = null)
         {
             var root = new GameObject("Wrist_Comfort_UI");
+            Vector3 pos = initialPos ?? new Vector3(-0.08f, 0.03f, -0.07f);
+            Vector3 rotEuler = initialRotEuler ?? new Vector3(15f, -80f, -25f);
+
             if (wristAnchor != null)
             {
                 root.transform.SetParent(wristAnchor, false);
-                // Positioned on the TOP-LEFT of the left controller (smartwatch location)
-                // Angled so the screen faces directly towards the user's eyes when turning wrist inward to check watch
-                root.transform.localPosition = new Vector3(-0.07f, 0.08f, -0.04f);
-                root.transform.localRotation = Quaternion.Euler(35f, -30f, -20f);
+                // Positioned on the dorsal side of the left wrist (smartwatch location)
+                // Rotated a quarter-turn so the screen faces directly towards the user's eyes when turning wrist inward to check watch
+                root.transform.localPosition = pos;
+                root.transform.localRotation = Quaternion.Euler(rotEuler);
             }
             root.transform.localScale = Vector3.one * 0.00045f;
 
@@ -358,6 +457,8 @@ namespace LOG8704.UI
 
             var controller = root.AddComponent<WristUIController>();
             controller.m_CanvasGroup = canvasGroup;
+            controller.m_UiLocalPosition = pos;
+            controller.m_UiLocalEuler = rotEuler;
 
             // 1. Futuristic Header Title
             var title = CreateTMPText(panelObj.transform, "HeaderTitle", "GAUNTLET OS // LOG8704", 17, FontStyles.Bold, new Vector2(0f, 180f), new Vector2(460f, 26f));
