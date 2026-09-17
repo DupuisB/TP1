@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Comfort;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Movement;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Turning;
@@ -45,8 +46,10 @@ namespace LOG8704.Locomotion
         [SerializeField] private TunnelingVignetteController m_VignetteController;
 
         [Header("Turn Input Action References")]
-        [SerializeField] private InputActionReference m_LeftSnapTurnAction;
-        [SerializeField] private InputActionReference m_LeftTurnAction;
+        [FormerlySerializedAs("m_LeftSnapTurnAction")]
+        [SerializeField] private InputActionReference m_RightSnapTurnAction;
+        [FormerlySerializedAs("m_LeftTurnAction")]
+        [SerializeField] private InputActionReference m_RightTurnAction;
 
         [Header("Initial Configuration")]
         [SerializeField] private LocomotionMode m_InitialLocomotionMode = LocomotionMode.Teleport;
@@ -292,9 +295,9 @@ namespace LOG8704.Locomotion
             var actionManagers = FindObjectsByType<ControllerInputActionManager>(FindObjectsSortMode.None);
             foreach (var mgr in actionManagers)
             {
-                // Only right controller manages locomotion (smooth move vs teleport)
-                // Left controller is strictly for view/turning and must keep smoothMotionEnabled false
-                if (mgr.name.Contains("Right") || (mgr.transform.parent != null && mgr.transform.parent.name.Contains("Right")))
+                // Left controller manages locomotion (smooth move vs teleport)
+                // Right controller is strictly for view/turning and must keep smoothMotionEnabled false
+                if (mgr.name.Contains("Left") || (mgr.transform.parent != null && mgr.transform.parent.name.Contains("Left")))
                 {
                     mgr.smoothMotionEnabled = (mode == LocomotionMode.SmoothMove);
                 }
@@ -382,13 +385,13 @@ namespace LOG8704.Locomotion
                 m_ContinuousTurnProvider.enabled = isSmooth;
 
             // Ensure Input Actions are enabled
-            if (!isSmooth && m_LeftSnapTurnAction != null && m_LeftSnapTurnAction.action != null && !m_LeftSnapTurnAction.action.enabled)
+            if (!isSmooth && m_RightSnapTurnAction != null && m_RightSnapTurnAction.action != null && !m_RightSnapTurnAction.action.enabled)
             {
-                m_LeftSnapTurnAction.action.Enable();
+                m_RightSnapTurnAction.action.Enable();
             }
-            if (isSmooth && m_LeftTurnAction != null && m_LeftTurnAction.action != null && !m_LeftTurnAction.action.enabled)
+            if (isSmooth && m_RightTurnAction != null && m_RightTurnAction.action != null && !m_RightTurnAction.action.enabled)
             {
-                m_LeftTurnAction.action.Enable();
+                m_RightTurnAction.action.Enable();
             }
 
             // Coordinate ControllerInputActionManagers

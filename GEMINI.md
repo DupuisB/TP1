@@ -13,8 +13,8 @@
 
 ## Locomotion & Controls Mapping Rules
 1. **Joystick Isolation**:
-   - **Left Joystick**: Exclusively for **View / Rotation** (`SnapTurnProvider` default 45° or `ContinuousTurnProvider`). No translation.
-   - **Right Joystick**: Exclusively for **Locomotion** (`ContinuousMoveProvider` in Smooth mode, `TeleportationProvider` / `DashProvider` in Teleport/Dash modes). No rotation.
+   - **Left Joystick**: Exclusively for **Locomotion** (`ContinuousMoveProvider` in Smooth mode, `TeleportationProvider` / `DashProvider` in Teleport/Dash modes). No rotation.
+   - **Right Joystick**: Exclusively for **View / Rotation** (`SnapTurnProvider` default 45° or `ContinuousTurnProvider`). No translation.
 2. **Comfort Systems**:
    - Field-of-view reduction via `TunnelingVignetteController`.
    - Rapid blink blackout transition via `ScreenFadeCanvas`.
