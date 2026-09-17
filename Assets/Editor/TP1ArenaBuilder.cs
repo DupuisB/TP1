@@ -44,10 +44,10 @@ namespace LOG8704.Editor
                     BuildArenaScene();
                 }
 
-                if (!EditorApplication.isPlaying && !EditorPrefs.GetBool("TP1_Joysticks_Swapped_V1", false))
+                if (!EditorApplication.isPlaying && !EditorPrefs.GetBool("TP1_Boxes_Teleportable_V1", false))
                 {
-                    EditorPrefs.SetBool("TP1_Joysticks_Swapped_V1", true);
-                    Debug.Log("[TP1ArenaBuilder] Automatically configuring Synty Demo scene with new joystick mapping (Left=Locomotion, Right=View)...");
+                    EditorPrefs.SetBool("TP1_Boxes_Teleportable_V1", true);
+                    Debug.Log("[TP1ArenaBuilder] Automatically configuring Synty Demo scene with elevated surfaces (boxes, crates, platforms, ramps)...");
                     SetupSyntyDemoScene();
                 }
             };
@@ -176,14 +176,36 @@ namespace LOG8704.Editor
             // 3. Setup EventSystem with XRUIInputModule
             SetupEventSystem();
 
-            // 4. Configure TeleportationArea on all ground and floor colliders
+            // 4. Configure TeleportationArea on all ground and elevated surfaces (boxes, crates, blocks, platforms, ramps, stairs)
             var colliders = UnityEngine.Object.FindObjectsByType<Collider>(FindObjectsSortMode.None);
-            int groundCount = 0;
+            int surfaceCount = 0;
             foreach (var col in colliders)
             {
+                if (col.isTrigger) continue;
+
                 string n = col.gameObject.name.ToLowerInvariant();
-                if (n.Contains("ground") || n.Contains("floor") || n.Contains("road") || n.Contains("path") || 
-                    n.Contains("dirt") || n.Contains("grass") || n.Contains("concrete") || n.Contains("plane"))
+                string p = col.transform.parent != null ? col.transform.parent.name.ToLowerInvariant() : "";
+                string fullName = n + " " + p;
+
+                // Explicit exclusions: walls, doors, fences, small handheld/decor items
+                if (fullName.Contains("wall") || fullName.Contains("fence") || fullName.Contains("door") || 
+                    fullName.Contains("window") || fullName.Contains("boundary") || fullName.Contains("obstacle_top_rejected") ||
+                    fullName.Contains("tree") || fullName.Contains("sword") || fullName.Contains("coin") || fullName.Contains("cone") ||
+                    fullName.Contains("arrow") || fullName.Contains("target") || fullName.Contains("controller") || fullName.Contains("hand"))
+                {
+                    continue;
+                }
+
+                // Match any walkable ground or elevated standable surface
+                bool isSurface = 
+                    fullName.Contains("ground") || fullName.Contains("floor") || fullName.Contains("road") || fullName.Contains("path") || 
+                    fullName.Contains("dirt") || fullName.Contains("grass") || fullName.Contains("concrete") || fullName.Contains("plane") ||
+                    fullName.Contains("crate") || fullName.Contains("box") || fullName.Contains("block") || fullName.Contains("platform") ||
+                    fullName.Contains("ramp") || fullName.Contains("stairs") || fullName.Contains("roof") || fullName.Contains("bench") ||
+                    fullName.Contains("table") || fullName.Contains("step") || fullName.Contains("deck") || fullName.Contains("rock") ||
+                    fullName.Contains("mountain") || fullName.Contains("bld") || fullName.Contains("house") || fullName.Contains("veh");
+
+                if (isSurface)
                 {
                     var teleArea = col.GetComponent<TeleportationArea>();
                     if (teleArea == null)
@@ -193,10 +215,10 @@ namespace LOG8704.Editor
                     teleArea.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
                     teleArea.matchOrientation = MatchOrientation.WorldSpaceUp;
                     teleArea.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
-                    groundCount++;
+                    surfaceCount++;
                 }
             }
-            Debug.Log($"[TP1ArenaBuilder] Configured TeleportationArea on {groundCount} ground colliders in Synty Demo.");
+            Debug.Log($"[TP1ArenaBuilder] Configured TeleportationArea on {surfaceCount} ground and elevated colliders (boxes, crates, ramps) in Synty Demo.");
 
             // Safety floor underneath to prevent falling into void
             var safetyFloor = GameObject.Find("Safety_Teleport_Floor");

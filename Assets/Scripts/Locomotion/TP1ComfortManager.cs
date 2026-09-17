@@ -168,17 +168,73 @@ namespace LOG8704.Locomotion
             // Setup Vignette providers
             SetupVignetteProviders();
 
-            // Link teleport areas to ComfortTeleportationProvider
-            var teleportAreas = FindObjectsByType<TeleportationArea>(FindObjectsSortMode.None);
-            foreach (var area in teleportAreas)
+            // Ensure all walkable & elevated surfaces (ground, boxes, crates, blocks, platforms, ramps, stairs) are teleportable
+            EnsureAllSurfacesTeleportable();
+        }
+
+        /// <summary>
+        /// Ensures all walkable and elevated surfaces (ground, floors, crates, boxes, blocks, platforms, ramps, stairs)
+        /// have active TeleportationArea components configured to allow teleportation and dash on top of them.
+        /// </summary>
+        public void EnsureAllSurfacesTeleportable()
+        {
+            var colliders = FindObjectsByType<Collider>(FindObjectsSortMode.None);
+            int count = 0;
+            foreach (var col in colliders)
+            {
+                if (col.isTrigger)
+                    continue;
+
+                string n = col.gameObject.name.ToLowerInvariant();
+                string p = col.transform.parent != null ? col.transform.parent.name.ToLowerInvariant() : "";
+                string fullName = n + " " + p;
+
+                // Explicit exclusions: walls, doors, fences, hand-held items, boundary colliders
+                if (fullName.Contains("wall") || fullName.Contains("fence") || fullName.Contains("door") || 
+                    fullName.Contains("window") || fullName.Contains("boundary") || fullName.Contains("obstacle_top_rejected") ||
+                    fullName.Contains("tree") || fullName.Contains("sword") || fullName.Contains("coin") || fullName.Contains("cone") ||
+                    fullName.Contains("arrow") || fullName.Contains("target") || fullName.Contains("controller") || fullName.Contains("hand"))
+                {
+                    continue;
+                }
+
+                // Match any walkable ground or elevated standable surface
+                bool isSurface = 
+                    fullName.Contains("ground") || fullName.Contains("floor") || fullName.Contains("road") || fullName.Contains("path") || 
+                    fullName.Contains("dirt") || fullName.Contains("grass") || fullName.Contains("concrete") || fullName.Contains("plane") ||
+                    fullName.Contains("crate") || fullName.Contains("box") || fullName.Contains("block") || fullName.Contains("platform") ||
+                    fullName.Contains("ramp") || fullName.Contains("stairs") || fullName.Contains("roof") || fullName.Contains("bench") ||
+                    fullName.Contains("table") || fullName.Contains("step") || fullName.Contains("deck") || fullName.Contains("rock") ||
+                    fullName.Contains("mountain") || fullName.Contains("bld") || fullName.Contains("house") || fullName.Contains("veh");
+
+                if (isSurface)
+                {
+                    var area = col.GetComponent<TeleportationArea>();
+                    if (area == null)
+                    {
+                        area = col.gameObject.AddComponent<TeleportationArea>();
+                    }
+                    area.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
+                    area.matchOrientation = MatchOrientation.WorldSpaceUp;
+                    area.interactionLayers = unchecked((int)2147483648) | 1 | UnityEngine.XR.Interaction.Toolkit.InteractionLayerMask.GetMask("Teleport");
+                    if (m_TeleportProvider != null)
+                        area.teleportationProvider = m_TeleportProvider;
+                    count++;
+                }
+            }
+
+            // Also link any other existing TeleportationArea components in the scene
+            var allAreas = FindObjectsByType<TeleportationArea>(FindObjectsSortMode.None);
+            foreach (var area in allAreas)
             {
                 area.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
                 area.matchOrientation = MatchOrientation.WorldSpaceUp;
                 area.interactionLayers = unchecked((int)2147483648) | 1 | UnityEngine.XR.Interaction.Toolkit.InteractionLayerMask.GetMask("Teleport");
-
                 if (m_TeleportProvider != null)
                     area.teleportationProvider = m_TeleportProvider;
             }
+
+            Debug.Log($"[TP1ComfortManager] Configured {count} teleportable surfaces (ground, boxes, crates, blocks, platforms, ramps).");
         }
 
         private void SetupVignetteProviders()
