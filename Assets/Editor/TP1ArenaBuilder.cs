@@ -27,6 +27,7 @@ namespace LOG8704.Editor
     {
         private const string TargetSceneDir = "Assets/Scenes";
         public const string TargetScenePath = "Assets/Scenes/TP1_TestArena.unity";
+        public const string SyntyScenePath = "Assets/Synty/PolygonStarter/Scenes/Demo.unity";
         private const string MaterialsDir = "Assets/Materials";
         private const string XrOriginPrefabPath = "Assets/Samples/XR Interaction Toolkit/3.5.1/Starter Assets/Prefabs/XR Origin (XR Rig).prefab";
         private const string TunnelingVignettePrefabPath = "Assets/Samples/XR Interaction Toolkit/3.5.1/Starter Assets/TunnelingVignette/TunnelingVignette.prefab";
@@ -41,6 +42,13 @@ namespace LOG8704.Editor
                     EditorPrefs.SetBool("TP1_Rebuild_V6", false);
                     Debug.Log("[TP1ArenaBuilder] Generating pristine TP1 Test Arena scene with unpacked rig (V6)...");
                     BuildArenaScene();
+                }
+
+                if (!EditorApplication.isPlaying && !EditorPrefs.GetBool("TP1_Synty_Setup_V1", false))
+                {
+                    EditorPrefs.SetBool("TP1_Synty_Setup_V1", true);
+                    Debug.Log("[TP1ArenaBuilder] Automatically configuring Synty Demo scene for VR locomotion...");
+                    SetupSyntyDemoScene();
                 }
             };
         }
@@ -116,6 +124,115 @@ namespace LOG8704.Editor
             AssetDatabase.Refresh();
 
             Debug.Log("[TP1ArenaBuilder] Successfully built and configured LOG8704 TP1 Test Arena!");
+        }
+
+        [MenuItem("LOG8704/Setup Synty Demo Scene for VR")]
+        public static void SetupSyntyDemoScene()
+        {
+            Debug.Log($"[TP1ArenaBuilder] Starting VR setup for Synty Demo scene ({SyntyScenePath})...");
+
+            if (!File.Exists(SyntyScenePath))
+            {
+                Debug.LogError($"[TP1ArenaBuilder] Synty Demo scene not found at {SyntyScenePath}!");
+                return;
+            }
+
+            // 0. Preserve wrist position if any in current active scene
+            Vector3? preservedWristPos = null;
+            Vector3? preservedWristRot = null;
+            var existingWristInActiveScene = UnityEngine.Object.FindFirstObjectByType<WristUIController>();
+            if (existingWristInActiveScene != null)
+            {
+                preservedWristPos = existingWristInActiveScene.uiLocalPosition;
+                preservedWristRot = existingWristInActiveScene.uiLocalEuler;
+            }
+            else
+            {
+                preservedWristPos = new Vector3(-0.04f, -0.2f, -0.2f);
+                preservedWristRot = new Vector3(0f, 100f, 10f);
+            }
+
+            // 1. Open the Synty Demo scene
+            var scene = EditorSceneManager.OpenScene(SyntyScenePath, OpenSceneMode.Single);
+
+            // 2. Remove non-XR desktop Camera(s) and AudioListener(s)
+            var cameras = UnityEngine.Object.FindObjectsByType<Camera>(FindObjectsSortMode.None);
+            foreach (var cam in cameras)
+            {
+                if (cam.GetComponentInParent<XROrigin>() == null)
+                {
+                    Debug.Log($"[TP1ArenaBuilder] Removing non-XR camera: {cam.gameObject.name}");
+                    UnityEngine.Object.DestroyImmediate(cam.gameObject);
+                }
+            }
+
+            // Remove any existing XR Origin to prevent duplicates
+            var existingRigs = UnityEngine.Object.FindObjectsByType<XROrigin>(FindObjectsSortMode.None);
+            foreach (var r in existingRigs)
+            {
+                UnityEngine.Object.DestroyImmediate(r.gameObject);
+            }
+
+            // 3. Setup EventSystem with XRUIInputModule
+            SetupEventSystem();
+
+            // 4. Configure TeleportationArea on all ground and floor colliders
+            var colliders = UnityEngine.Object.FindObjectsByType<Collider>(FindObjectsSortMode.None);
+            int groundCount = 0;
+            foreach (var col in colliders)
+            {
+                string n = col.gameObject.name.ToLowerInvariant();
+                if (n.Contains("ground") || n.Contains("floor") || n.Contains("road") || n.Contains("path") || 
+                    n.Contains("dirt") || n.Contains("grass") || n.Contains("concrete") || n.Contains("plane"))
+                {
+                    var teleArea = col.GetComponent<TeleportationArea>();
+                    if (teleArea == null)
+                    {
+                        teleArea = col.gameObject.AddComponent<TeleportationArea>();
+                    }
+                    teleArea.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
+                    teleArea.matchOrientation = MatchOrientation.WorldSpaceUp;
+                    teleArea.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+                    groundCount++;
+                }
+            }
+            Debug.Log($"[TP1ArenaBuilder] Configured TeleportationArea on {groundCount} ground colliders in Synty Demo.");
+
+            // Safety floor underneath to prevent falling into void
+            var safetyFloor = GameObject.Find("Safety_Teleport_Floor");
+            if (safetyFloor == null)
+            {
+                safetyFloor = new GameObject("Safety_Teleport_Floor");
+                safetyFloor.transform.position = new Vector3(0f, -0.05f, 0f);
+                var boxCol = safetyFloor.AddComponent<BoxCollider>();
+                boxCol.size = new Vector3(300f, 0.1f, 300f);
+                boxCol.center = Vector3.zero;
+                var teleArea = safetyFloor.AddComponent<TeleportationArea>();
+                teleArea.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
+                teleArea.matchOrientation = MatchOrientation.WorldSpaceUp;
+                teleArea.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+            }
+
+            // 5. Setup XR Rig and Locomotion
+            var rigInstance = SetupXRRig(scene, preservedWristPos, preservedWristRot);
+            if (rigInstance != null)
+            {
+                rigInstance.transform.position = new Vector3(0f, 0.05f, 10f);
+                rigInstance.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+            }
+
+            // 6. Save scene
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene, SyntyScenePath);
+            Debug.Log($"[TP1ArenaBuilder] Scene successfully saved to {SyntyScenePath}");
+
+            // 7. Register as Scene 0 in EditorBuildSettings
+            RegisterSceneAsScene0(SyntyScenePath);
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            Debug.Log("[TP1ArenaBuilder] Synty Demo scene successfully configured as active VR locomotion scene!");
         }
 
         private static void EnsureDirectory(string path)
