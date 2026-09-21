@@ -207,11 +207,31 @@ namespace LOG8704.Locomotion
                 return false;
 
             // Calculate destination for origin taking into account user's head/body ground offset
+            Vector3 originPos = origin.Origin.transform.position;
             Vector3 targetOriginPos = targetPosition;
-            if (origin.Camera != null && origin.Origin != null)
+            if (origin.Camera != null)
             {
-                Vector3 bodyGroundPos = new Vector3(origin.Camera.transform.position.x, origin.Origin.transform.position.y, origin.Camera.transform.position.z);
-                targetOriginPos = targetPosition + origin.Origin.transform.position - bodyGroundPos;
+                Vector3 bodyGroundPos = new Vector3(origin.Camera.transform.position.x, originPos.y, origin.Camera.transform.position.z);
+                targetOriginPos = targetPosition + originPos - bodyGroundPos;
+            }
+
+            // Obstacle safety sweep along dash trajectory
+            Vector3 dashVec = targetOriginPos - originPos;
+            float dashDist = dashVec.magnitude;
+            if (dashDist > 0.05f)
+            {
+                Vector3 dashDir = dashVec / dashDist;
+                Vector3 sweepStart = originPos + Vector3.up * 0.5f;
+                if (Physics.SphereCast(sweepStart, m_PlayerRadius, dashDir, out RaycastHit hit, dashDist, m_ObstacleLayers, QueryTriggerInteraction.Ignore))
+                {
+                    float safeDist = Mathf.Max(0f, hit.distance - m_SkinWidth);
+                    if (safeDist <= 0.1f)
+                    {
+                        TryEndLocomotion();
+                        return false;
+                    }
+                    targetOriginPos = originPos + dashDir * safeDist;
+                }
             }
 
             m_DashCoroutine = StartCoroutine(PerformDash(origin, targetOriginPos, targetRotation, onComplete));
@@ -280,13 +300,16 @@ namespace LOG8704.Locomotion
                 yield return null;
             }
 
-            // Ensure exact target destination without snapback
+            // Ensure final step to destination respecting obstacles
             Vector3 finalStep = targetPosition - originTransform.position;
             if (cc != null && cc.enabled)
             {
                 cc.Move(finalStep);
             }
-            originTransform.position = targetPosition;
+            else
+            {
+                originTransform.position = targetPosition;
+            }
 
             if (targetRotation.HasValue)
             {

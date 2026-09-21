@@ -172,6 +172,15 @@ namespace LOG8704.Locomotion
             img.color = Color.black;
             img.raycastTarget = false;
 
+            // Ensure fade draws over all 3D geometry regardless of depth
+            var defaultShader = Shader.Find("UI/Default");
+            if (defaultShader != null)
+            {
+                var overlayMat = new Material(defaultShader);
+                overlayMat.SetInt("unity_GUIZTestMode", (int)UnityEngine.Rendering.CompareFunction.Always);
+                img.material = overlayMat;
+            }
+
             var comp = fadeObj.AddComponent<ScreenFadeCanvas>();
             comp.m_CanvasGroup = canvasGroup;
             comp.m_FadeImage = img;
