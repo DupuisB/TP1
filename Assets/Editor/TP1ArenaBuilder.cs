@@ -189,10 +189,22 @@ namespace LOG8704.Editor
 
                 // Explicit exclusions: walls, doors, fences, small handheld/decor items
                 if (fullName.Contains("wall") || fullName.Contains("fence") || fullName.Contains("door") || 
-                    fullName.Contains("window") || fullName.Contains("boundary") || fullName.Contains("obstacle_top_rejected") ||
+                    fullName.Contains("window") || fullName.Contains("boundary") ||
                     fullName.Contains("tree") || fullName.Contains("sword") || fullName.Contains("coin") || fullName.Contains("cone") ||
                     fullName.Contains("arrow") || fullName.Contains("target") || fullName.Contains("controller") || fullName.Contains("hand"))
                 {
+                    continue;
+                }
+
+                // If object is red, has NoTeleportZone, or is marked to block teleportation:
+                // Keep collider for walking and raycast aiming, but ensure TeleportationArea is removed.
+                if (TP1ComfortManager.IsRedOrBlocked(col))
+                {
+                    var existingArea = col.GetComponent<TeleportationArea>();
+                    if (existingArea != null)
+                    {
+                        UnityEngine.Object.DestroyImmediate(existingArea);
+                    }
                     continue;
                 }
 

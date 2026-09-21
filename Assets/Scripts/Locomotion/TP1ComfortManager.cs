@@ -191,10 +191,23 @@ namespace LOG8704.Locomotion
 
                 // Explicit exclusions: walls, doors, fences, hand-held items, boundary colliders
                 if (fullName.Contains("wall") || fullName.Contains("fence") || fullName.Contains("door") || 
-                    fullName.Contains("window") || fullName.Contains("boundary") || fullName.Contains("obstacle_top_rejected") ||
+                    fullName.Contains("window") || fullName.Contains("boundary") ||
                     fullName.Contains("tree") || fullName.Contains("sword") || fullName.Contains("coin") || fullName.Contains("cone") ||
                     fullName.Contains("arrow") || fullName.Contains("target") || fullName.Contains("controller") || fullName.Contains("hand"))
                 {
+                    continue;
+                }
+
+                // If object is red, has NoTeleportZone, or is marked to block teleportation:
+                // Keep collider for walking and raycast aiming, but ensure TeleportationArea is removed.
+                if (IsRedOrBlocked(col))
+                {
+                    var existingArea = col.GetComponent<TeleportationArea>();
+                    if (existingArea != null)
+                    {
+                        if (Application.isPlaying) Destroy(existingArea);
+                        else DestroyImmediate(existingArea);
+                    }
                     continue;
                 }
 
@@ -223,10 +236,19 @@ namespace LOG8704.Locomotion
                 }
             }
 
-            // Also link any other existing TeleportationArea components in the scene
+            // Also link any other existing TeleportationArea components in the scene,
+            // ensuring no red or blocked surfaces are linked
             var allAreas = FindObjectsByType<TeleportationArea>(FindObjectsSortMode.None);
             foreach (var area in allAreas)
             {
+                var col = area.GetComponent<Collider>();
+                if (col != null && IsRedOrBlocked(col))
+                {
+                    if (Application.isPlaying) Destroy(area);
+                    else DestroyImmediate(area);
+                    continue;
+                }
+
                 area.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
                 area.matchOrientation = MatchOrientation.WorldSpaceUp;
                 area.interactionLayers = unchecked((int)2147483648) | 1 | UnityEngine.XR.Interaction.Toolkit.InteractionLayerMask.GetMask("Teleport");
@@ -235,6 +257,45 @@ namespace LOG8704.Locomotion
             }
 
             Debug.Log($"[TP1ComfortManager] Configured {count} teleportable surfaces (ground, boxes, crates, blocks, platforms, ramps).");
+        }
+
+        /// <summary>
+        /// Returns true if a collider belongs to an object that rejects teleportation
+        /// (e.g. red colored materials, red in name/tag, NoTeleportZone component, or rejected obstacles).
+        /// </summary>
+        public static bool IsRedOrBlocked(Collider col)
+        {
+            if (col == null) return false;
+            if (col.GetComponent<NoTeleportZone>() != null || col.GetComponentInParent<NoTeleportZone>() != null)
+                return true;
+
+            string n = col.gameObject.name.ToLowerInvariant();
+            string p = col.transform.parent != null ? col.transform.parent.name.ToLowerInvariant() : "";
+            string fullName = n + " " + p;
+
+            if (fullName.Contains("red") || fullName.Contains("no_teleport") || fullName.Contains("noteleport") ||
+                fullName.Contains("obstacle_top_rejected") || fullName.Contains("m_arenaobstacle"))
+            {
+                return true;
+            }
+
+            var renderer = col.GetComponent<Renderer>() ?? col.GetComponentInParent<Renderer>();
+            if (renderer != null && renderer.sharedMaterials != null)
+            {
+                foreach (var mat in renderer.sharedMaterials)
+                {
+                    if (mat == null) continue;
+                    string matName = mat.name.ToLowerInvariant();
+                    if (matName.Contains("red") || matName.Contains("arenaobstacle"))
+                        return true;
+
+                    Color c = mat.HasProperty("_BaseColor") ? mat.GetColor("_BaseColor") : (mat.HasProperty("_Color") ? mat.GetColor("_Color") : Color.black);
+                    if (c.r > 0.6f && c.g < 0.35f && c.b < 0.35f && c.a > 0.1f)
+                        return true;
+                }
+            }
+
+            return false;
         }
 
         private void SetupVignetteProviders()
