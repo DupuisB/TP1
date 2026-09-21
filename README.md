@@ -40,6 +40,7 @@ Test locomotion and UI ergonomics directly in the Unity Editor Game view without
 
 | Hand / Stick | Role | Mechanics |
 | :--- | :--- | :--- |
-| **Left Joystick** | **View Only** | Snap Turn (45°) or Continuous Smooth Turn (60°/s). Translation disabled. |
-| **Right Joystick** | **Locomotion Only** | Continuous Smooth Move (Walk), Parabolic Teleport (Blink / Instant), or Directional Dash (0.2s). Rotation disabled. |
+| **Left Joystick** | **Locomotion Only** | Continuous Smooth Move (Walk), Parabolic Teleport (Blink / Instant), or Directional Dash (0.2s). Rotation disabled. |
+| **Right Joystick** | **View Only** | Snap Turn (45°) or Continuous Smooth Turn (60°/s). Translation disabled. |
 | **Left Forearm** | **Gauntlet UI** | Glance-based reveal when wrist is turned towards eyes. Contains Walk, Teleport, Dash, Blink, Vignette, and Turn mode icon buttons. |
+| **Right Hand** | **Direct / Ray Interaction** | Near grab, far-ray grab, and socket docking on interactive props and UI buttons. |
