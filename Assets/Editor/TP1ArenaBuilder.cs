@@ -628,6 +628,7 @@ namespace LOG8704.Editor
             characterController.minMoveDistance = 0f;
 
             // Attach CharacterControllerDriver to dynamically track HMD height & position
+#pragma warning disable CS0618
             var ccDriver = rigInstance.GetComponent<CharacterControllerDriver>();
             if (ccDriver == null)
             {
@@ -635,6 +636,7 @@ namespace LOG8704.Editor
             }
             ccDriver.minHeight = 0.5f;
             ccDriver.maxHeight = 2.2f;
+#pragma warning restore CS0618
 
             // Ensure LocomotionMediator & XRBodyTransformer exist
             var mediator = rigInstance.GetComponentInChildren<LocomotionMediator>(true);
@@ -1007,12 +1009,14 @@ namespace LOG8704.Editor
             }
 
             // 6. Connect CharacterControllerDriver locomotion provider
+#pragma warning disable CS0618
             var ccDriver = rigInstance.GetComponent<CharacterControllerDriver>();
             if (ccDriver != null)
             {
                 ccDriver.locomotionProvider = moveProvider;
                 EditorUtility.SetDirty(ccDriver);
             }
+#pragma warning restore CS0618
 
             Debug.Log("[TP1ArenaBuilder] Joystick assignments configured: Left = Locomotion Only (Move/Teleport/Dash), Right = View Only (Snap/Smooth Turn).");
         }
