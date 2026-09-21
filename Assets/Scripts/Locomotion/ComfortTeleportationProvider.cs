@@ -47,6 +47,13 @@ namespace LOG8704.Locomotion
         /// </summary>
         public override bool QueueTeleportRequest(TeleportRequest teleportRequest)
         {
+            // Reject teleport if destination penetrates inside geometry/walls or lacks player body clearance
+            if (!IsValidTeleportDestination(teleportRequest.destinationPosition))
+            {
+                Debug.LogWarning($"[ComfortTeleportationProvider] Teleport destination {teleportRequest.destinationPosition} rejected: collision/clearance obstacle detected.");
+                return false;
+            }
+
             var mgr = TP1ComfortManager.Instance;
             if (mgr != null)
             {
@@ -76,6 +83,30 @@ namespace LOG8704.Locomotion
 
             // Fallback default: Blink teleport
             return ExecuteBlinkTeleport(teleportRequest);
+        }
+
+        /// <summary>
+        /// Validates that the player's body and head clearance volume at the destination does not overlap solid wall/obstacle geometry.
+        /// </summary>
+        public bool IsValidTeleportDestination(Vector3 destination)
+        {
+            // Check player torso and head clearance capsule (from 0.35m above ground to 1.60m)
+            Vector3 bottom = destination + Vector3.up * 0.35f;
+            Vector3 top = destination + Vector3.up * 1.60f;
+            float radius = 0.22f;
+
+            var colliders = Physics.OverlapCapsule(bottom, top, radius, ~0, QueryTriggerInteraction.Ignore);
+            foreach (var col in colliders)
+            {
+                // Ignore player's own colliders (e.g. CharacterController on rig)
+                if (col.transform.IsChildOf(transform.root) || col.transform.root == transform.root)
+                    continue;
+
+                // Hit a solid obstacle/wall inside the destination volume
+                return false;
+            }
+
+            return true;
         }
 
         private bool ExecuteBlinkTeleport(TeleportRequest request)

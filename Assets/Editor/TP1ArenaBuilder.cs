@@ -187,9 +187,10 @@ namespace LOG8704.Editor
                 string p = col.transform.parent != null ? col.transform.parent.name.ToLowerInvariant() : "";
                 string fullName = n + " " + p;
 
-                // Explicit exclusions: walls, doors, fences, small handheld/decor items
+                // Explicit exclusions: walls, columns, pillars, doors, fences, small handheld/decor items
                 if (fullName.Contains("wall") || fullName.Contains("fence") || fullName.Contains("door") || 
-                    fullName.Contains("window") || fullName.Contains("boundary") ||
+                    fullName.Contains("window") || fullName.Contains("boundary") || fullName.Contains("column") ||
+                    fullName.Contains("pillar") || fullName.Contains("frame") ||
                     fullName.Contains("tree") || fullName.Contains("sword") || fullName.Contains("coin") || fullName.Contains("cone") ||
                     fullName.Contains("arrow") || fullName.Contains("target") || fullName.Contains("controller") || fullName.Contains("hand"))
                 {
@@ -208,14 +209,13 @@ namespace LOG8704.Editor
                     continue;
                 }
 
-                // Match any walkable ground or elevated standable surface
+                // Match walkable ground, floors, platforms, ramps, stairs, roofs, decks (boxes/crates excluded)
                 bool isSurface = 
                     fullName.Contains("ground") || fullName.Contains("floor") || fullName.Contains("road") || fullName.Contains("path") || 
                     fullName.Contains("dirt") || fullName.Contains("grass") || fullName.Contains("concrete") || fullName.Contains("plane") ||
-                    fullName.Contains("crate") || fullName.Contains("box") || fullName.Contains("block") || fullName.Contains("platform") ||
-                    fullName.Contains("ramp") || fullName.Contains("stairs") || fullName.Contains("roof") || fullName.Contains("bench") ||
-                    fullName.Contains("table") || fullName.Contains("step") || fullName.Contains("deck") || fullName.Contains("rock") ||
-                    fullName.Contains("mountain") || fullName.Contains("bld") || fullName.Contains("house") || fullName.Contains("veh");
+                    fullName.Contains("platform") || fullName.Contains("ramp") || fullName.Contains("stairs") || fullName.Contains("roof") || 
+                    fullName.Contains("bench") || fullName.Contains("table") || fullName.Contains("step") || fullName.Contains("deck") || 
+                    fullName.Contains("rock") || fullName.Contains("mountain") || fullName.Contains("bld") || fullName.Contains("house") || fullName.Contains("veh");
 
                 if (isSurface)
                 {
@@ -227,6 +227,8 @@ namespace LOG8704.Editor
                     teleArea.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
                     teleArea.matchOrientation = MatchOrientation.WorldSpaceUp;
                     teleArea.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+                    teleArea.filterSelectionByHitNormal = true;
+                    teleArea.upNormalToleranceDegrees = 75f;
                     surfaceCount++;
                 }
             }
@@ -245,6 +247,8 @@ namespace LOG8704.Editor
                 teleArea.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
                 teleArea.matchOrientation = MatchOrientation.WorldSpaceUp;
                 teleArea.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+                teleArea.filterSelectionByHitNormal = true;
+                teleArea.upNormalToleranceDegrees = 75f;
             }
 
             // 5. Setup XR Rig and Locomotion
@@ -339,6 +343,10 @@ namespace LOG8704.Editor
             if (matchProp != null) matchProp.intValue = 0; // WorldSpaceUp
             var layersProp = so.FindProperty("m_InteractionLayers.m_Bits");
             if (layersProp != null) layersProp.longValue = 2147483649L;
+            var filterProp = so.FindProperty("m_FilterSelectionByHitNormal");
+            if (filterProp != null) filterProp.boolValue = true;
+            var tolProp = so.FindProperty("m_UpNormalToleranceDegrees");
+            if (tolProp != null) tolProp.floatValue = 75f;
             var colProp = so.FindProperty("m_Colliders");
             if (colProp != null && col != null)
             {
@@ -453,6 +461,8 @@ namespace LOG8704.Editor
             teleportArea.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
             teleportArea.matchOrientation = MatchOrientation.WorldSpaceUp;
             teleportArea.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+            teleportArea.filterSelectionByHitNormal = true;
+            teleportArea.upNormalToleranceDegrees = 75f;
 
             Debug.Log("[TP1ArenaBuilder] Teleport Platform Box created with TeleportationArea on top surface.");
         }

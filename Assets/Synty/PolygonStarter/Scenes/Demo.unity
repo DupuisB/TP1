@@ -271,8 +271,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -428,8 +428,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -643,8 +643,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -878,8 +878,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -1027,8 +1027,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -1176,8 +1176,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -1391,8 +1391,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -1598,8 +1598,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -1751,8 +1751,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -1908,8 +1908,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -2135,8 +2135,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -2284,8 +2284,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -2622,8 +2622,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -2825,8 +2825,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -3164,8 +3164,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -3458,8 +3458,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -3607,8 +3607,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -4012,8 +4012,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -4169,8 +4169,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -4730,8 +4730,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -4891,8 +4891,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -5048,8 +5048,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -5205,8 +5205,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -5354,8 +5354,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -5499,8 +5499,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -5714,8 +5714,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -6215,8 +6215,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -6422,8 +6422,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -6822,8 +6822,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -6983,8 +6983,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -7140,8 +7140,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -7433,8 +7433,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -7652,8 +7652,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -7809,8 +7809,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -7958,8 +7958,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -8256,8 +8256,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -8421,8 +8421,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -8632,8 +8632,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -8916,8 +8916,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -9077,8 +9077,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -9238,8 +9238,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -9461,8 +9461,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -9680,8 +9680,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -10153,8 +10153,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -10306,8 +10306,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -10615,8 +10615,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -11033,8 +11033,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -11352,8 +11352,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -11808,8 +11808,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -12201,8 +12201,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -12531,8 +12531,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -12738,8 +12738,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -12961,8 +12961,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -13118,8 +13118,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -13275,8 +13275,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -13424,8 +13424,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -13768,8 +13768,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -13983,8 +13983,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -14140,8 +14140,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -14301,8 +14301,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -14508,8 +14508,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -14880,8 +14880,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -15103,8 +15103,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -15504,8 +15504,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -15661,8 +15661,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -15926,8 +15926,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -16079,8 +16079,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -16240,8 +16240,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -16401,8 +16401,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -16558,8 +16558,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -16777,8 +16777,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -16942,8 +16942,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -17153,8 +17153,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -17389,8 +17389,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -17546,8 +17546,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -17757,8 +17757,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -17914,8 +17914,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -18204,8 +18204,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -18365,8 +18365,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -18514,8 +18514,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -18671,8 +18671,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -18902,8 +18902,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -19171,8 +19171,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -19390,8 +19390,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -19547,8 +19547,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -19704,8 +19704,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -20162,8 +20162,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -20415,8 +20415,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -20576,8 +20576,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -20725,8 +20725,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -20936,8 +20936,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -21093,8 +21093,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -21242,8 +21242,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -21453,8 +21453,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -21614,8 +21614,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -21759,8 +21759,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -21978,8 +21978,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -22135,8 +22135,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -22362,8 +22362,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -22507,8 +22507,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -22668,8 +22668,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -22879,8 +22879,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -23028,8 +23028,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -23507,8 +23507,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -24181,8 +24181,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -24465,8 +24465,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -24622,8 +24622,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -24771,8 +24771,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -24928,8 +24928,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -25089,8 +25089,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -25246,8 +25246,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -25395,8 +25395,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -25556,8 +25556,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -25817,8 +25817,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -25978,8 +25978,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -26268,8 +26268,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -26425,8 +26425,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -26582,8 +26582,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -26839,8 +26839,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -26996,8 +26996,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -27265,8 +27265,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -27426,8 +27426,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -27583,8 +27583,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -27740,8 +27740,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -27905,8 +27905,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -28207,8 +28207,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -28360,8 +28360,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -28708,8 +28708,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -29014,8 +29014,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -29311,8 +29311,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -29464,8 +29464,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -29621,8 +29621,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -30012,8 +30012,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -30177,8 +30177,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -30322,8 +30322,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -30467,8 +30467,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -30616,8 +30616,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -30827,8 +30827,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -30972,8 +30972,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -31129,8 +31129,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -31406,8 +31406,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -31819,8 +31819,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -31972,8 +31972,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -32117,8 +32117,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -32282,8 +32282,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -32497,8 +32497,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -32704,8 +32704,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -32865,8 +32865,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -33180,8 +33180,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -33391,8 +33391,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -33544,8 +33544,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -33965,8 +33965,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -34250,8 +34250,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -34407,8 +34407,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -34630,8 +34630,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -34853,8 +34853,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -35231,8 +35231,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -35512,8 +35512,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -35677,8 +35677,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -35904,8 +35904,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -36107,8 +36107,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -36264,8 +36264,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -36421,8 +36421,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -36674,8 +36674,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -36893,8 +36893,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -37050,8 +37050,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -37348,8 +37348,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -37645,8 +37645,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -37856,8 +37856,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -38063,8 +38063,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -38228,8 +38228,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -38385,8 +38385,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -38546,8 +38546,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -38703,8 +38703,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -39050,8 +39050,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -39282,8 +39282,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -39431,8 +39431,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -39592,8 +39592,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -39749,8 +39749,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -40165,8 +40165,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -40326,8 +40326,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -40471,8 +40471,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -40620,8 +40620,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -40913,8 +40913,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -41070,8 +41070,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -41279,8 +41279,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -41362,8 +41362,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -41445,8 +41445,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -41528,8 +41528,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -41611,8 +41611,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -42020,8 +42020,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -42169,8 +42169,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -42380,8 +42380,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -42541,8 +42541,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -42698,8 +42698,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -42859,8 +42859,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -43074,8 +43074,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -43219,8 +43219,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -43376,8 +43376,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -43595,8 +43595,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -43752,8 +43752,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -44116,8 +44116,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -44327,8 +44327,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -44484,8 +44484,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -44629,8 +44629,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -44786,8 +44786,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -44947,8 +44947,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -45096,8 +45096,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -45241,8 +45241,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -45452,8 +45452,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -45850,8 +45850,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -46007,8 +46007,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -46168,8 +46168,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -46395,8 +46395,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -46552,8 +46552,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -46713,8 +46713,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -46870,8 +46870,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -47031,8 +47031,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -47316,8 +47316,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -47473,8 +47473,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -47634,8 +47634,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -47779,8 +47779,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -47932,8 +47932,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -48197,8 +48197,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -48400,8 +48400,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -48565,8 +48565,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -48805,8 +48805,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -48966,8 +48966,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -49318,8 +49318,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -49475,8 +49475,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -49640,8 +49640,8 @@ MonoBehaviour:
   m_MatchOrientation: 0
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 75
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
@@ -51592,8 +51592,8 @@ MonoBehaviour:
     m_NumAlphaKeys: 2
   m_InvalidColorGradient:
     serializedVersion: 2
-    key0: {r: 1, g: 0, b: 0, a: 0.5882353}
-    key1: {r: 1, g: 0, b: 0, a: 0.5882353}
+    key0: {r: 1, g: 0.5, b: 0, a: 0.5882353}
+    key1: {r: 1, g: 0.5, b: 0, a: 0.5882353}
     key2: {r: 0, g: 0, b: 0, a: 0}
     key3: {r: 0, g: 0, b: 0, a: 0}
     key4: {r: 0, g: 0, b: 0, a: 0}
@@ -51622,8 +51622,8 @@ MonoBehaviour:
     m_NumAlphaKeys: 2
   m_BlockedColorGradient:
     serializedVersion: 2
-    key0: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-    key1: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+    key0: {r: 1, g: 0.5, b: 0, a: 1}
+    key1: {r: 1, g: 0.5, b: 0, a: 1}
     key2: {r: 0, g: 0, b: 0, a: 0}
     key3: {r: 0, g: 0, b: 0, a: 0}
     key4: {r: 0, g: 0, b: 0, a: 0}
@@ -54455,8 +54455,8 @@ MonoBehaviour:
     m_NumAlphaKeys: 2
   m_InvalidColorGradient:
     serializedVersion: 2
-    key0: {r: 1, g: 0, b: 0, a: 0.5882353}
-    key1: {r: 1, g: 0, b: 0, a: 0.5882353}
+    key0: {r: 1, g: 0.5, b: 0, a: 0.5882353}
+    key1: {r: 1, g: 0.5, b: 0, a: 0.5882353}
     key2: {r: 0, g: 0, b: 0, a: 0}
     key3: {r: 0, g: 0, b: 0, a: 0}
     key4: {r: 0, g: 0, b: 0, a: 0}
@@ -54485,8 +54485,8 @@ MonoBehaviour:
     m_NumAlphaKeys: 2
   m_BlockedColorGradient:
     serializedVersion: 2
-    key0: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-    key1: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+    key0: {r: 1, g: 0.5, b: 0, a: 1}
+    key1: {r: 1, g: 0.5, b: 0, a: 1}
     key2: {r: 0, g: 0, b: 0, a: 0}
     key3: {r: 0, g: 0, b: 0, a: 0}
     key4: {r: 0, g: 0, b: 0, a: 0}
