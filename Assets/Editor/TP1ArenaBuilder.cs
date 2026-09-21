@@ -192,10 +192,7 @@ namespace LOG8704.Editor
             var allExistingTeleportAreas = UnityEngine.Object.FindObjectsByType<TeleportationArea>(FindObjectsSortMode.None);
             foreach (var area in allExistingTeleportAreas)
             {
-                if (area.gameObject.name != "Safety_Teleport_Floor")
-                {
-                    UnityEngine.Object.DestroyImmediate(area);
-                }
+                UnityEngine.Object.DestroyImmediate(area);
             }
 
             // 4. Configure TeleportationArea on all walkable ground and elevated platforms
@@ -205,23 +202,8 @@ namespace LOG8704.Editor
             {
                 if (col.isTrigger) continue;
 
-                string n = col.gameObject.name.ToLowerInvariant();
-                string p = col.transform.parent != null ? col.transform.parent.name.ToLowerInvariant() : "";
-                string fullName = n + " " + p;
-
-                // Explicit exclusions: walls, columns, pillars, doors, fences, crates, wheels, planes, small items
-                if (fullName.Contains("wall") || fullName.Contains("fence") || fullName.Contains("door") || 
-                    fullName.Contains("window") || fullName.Contains("boundary") || fullName.Contains("column") ||
-                    fullName.Contains("pillar") || fullName.Contains("frame") || fullName.Contains("crate") || fullName.Contains("box") ||
-                    fullName.Contains("wheel") || fullName.Contains("tire") || fullName.Contains("plane") ||
-                    fullName.Contains("tree") || fullName.Contains("sword") || fullName.Contains("coin") || fullName.Contains("cone") ||
-                    fullName.Contains("arrow") || fullName.Contains("target") || fullName.Contains("controller") || fullName.Contains("hand"))
-                {
-                    continue;
-                }
-
-                // If object is red, has NoTeleportZone, or is marked to block teleportation:
-                // Keep collider for walking and raycast aiming, but ensure TeleportationArea is removed.
+                // If object is red (red.mat), has NoTeleportZone, or is marked to block teleportation:
+                // Ensure TeleportationArea is removed.
                 if (TP1ComfortManager.IsRedOrBlocked(col))
                 {
                     var existingArea = col.GetComponent<TeleportationArea>();
@@ -232,15 +214,8 @@ namespace LOG8704.Editor
                     continue;
                 }
 
-                // Match walkable ground, floors, platforms, ramps, stairs, roofs, decks (boxes/crates excluded)
-                bool isSurface = 
-                    fullName.Contains("ground") || fullName.Contains("floor") || fullName.Contains("road") || fullName.Contains("path") || 
-                    fullName.Contains("dirt") || fullName.Contains("grass") || fullName.Contains("concrete") || fullName.Contains("plane") ||
-                    fullName.Contains("platform") || fullName.Contains("ramp") || fullName.Contains("stairs") || fullName.Contains("roof") || 
-                    fullName.Contains("bench") || fullName.Contains("table") || fullName.Contains("step") || fullName.Contains("deck") || 
-                    fullName.Contains("rock") || fullName.Contains("mountain") || fullName.Contains("bld") || fullName.Contains("house") || fullName.Contains("veh");
-
-                if (isSurface)
+                // Match walkable ground, floors, platforms, ramps, stairs, modular blocks, crates, roofs, decks
+                if (TP1ComfortManager.IsWalkableSurface(col))
                 {
                     var teleArea = col.GetComponent<TeleportationArea>();
                     if (teleArea == null)
@@ -251,13 +226,33 @@ namespace LOG8704.Editor
                     teleArea.matchOrientation = MatchOrientation.WorldSpaceUp;
                     teleArea.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
                     teleArea.filterSelectionByHitNormal = true;
-                    teleArea.upNormalToleranceDegrees = 75f;
+                    teleArea.upNormalToleranceDegrees = 60f;
                     surfaceCount++;
                 }
+                else
+                {
+                    var existingArea = col.GetComponent<TeleportationArea>();
+                    if (existingArea != null)
+                    {
+                        UnityEngine.Object.DestroyImmediate(existingArea);
+                    }
+                }
             }
-            Debug.Log($"[TP1ArenaBuilder] Configured TeleportationArea on {surfaceCount} ground and elevated colliders (boxes, crates, ramps) in Synty Demo.");
 
-            // Safety floor underneath to prevent falling into void
+            // Cleanup any stray TeleportationAreas on red or non-walkable objects
+            var allAreas = UnityEngine.Object.FindObjectsByType<TeleportationArea>(FindObjectsSortMode.None);
+            foreach (var area in allAreas)
+            {
+                var col = area.GetComponent<Collider>();
+                if (col == null || TP1ComfortManager.IsRedOrBlocked(col) || !TP1ComfortManager.IsWalkableSurface(col))
+                {
+                    UnityEngine.Object.DestroyImmediate(area);
+                }
+            }
+
+            Debug.Log($"[TP1ArenaBuilder] Configured TeleportationArea on {surfaceCount} valid surfaces (ground, floors, platforms, blocks, crates, ramps). Red surfaces strictly excluded.");
+
+            // Safety floor underneath to prevent falling into void (strictly NO TeleportationArea)
             var safetyFloor = GameObject.Find("Safety_Teleport_Floor");
             if (safetyFloor == null)
             {
@@ -266,12 +261,11 @@ namespace LOG8704.Editor
                 var boxCol = safetyFloor.AddComponent<BoxCollider>();
                 boxCol.size = new Vector3(300f, 0.1f, 300f);
                 boxCol.center = Vector3.zero;
-                var teleArea = safetyFloor.AddComponent<TeleportationArea>();
-                teleArea.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
-                teleArea.matchOrientation = MatchOrientation.WorldSpaceUp;
-                teleArea.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
-                teleArea.filterSelectionByHitNormal = true;
-                teleArea.upNormalToleranceDegrees = 75f;
+            }
+            else
+            {
+                var tele = safetyFloor.GetComponent<TeleportationArea>();
+                if (tele != null) UnityEngine.Object.DestroyImmediate(tele);
             }
 
             // 5. Setup XR Rig and Locomotion

@@ -54,6 +54,13 @@ namespace LOG8704.Locomotion
                 return false;
             }
 
+            // Reject teleport if destination lands on a red or blocked surface
+            if (IsDestinationRedOrBlocked(teleportRequest.destinationPosition))
+            {
+                Debug.LogWarning($"[ComfortTeleportationProvider] Teleport destination {teleportRequest.destinationPosition} rejected: surface is red (red.mat) or blocked.");
+                return false;
+            }
+
             var mgr = TP1ComfortManager.Instance;
             if (mgr != null)
             {
@@ -107,6 +114,19 @@ namespace LOG8704.Locomotion
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Validates that the surface under the teleport destination is not red (red.mat) or blocked.
+        /// </summary>
+        public bool IsDestinationRedOrBlocked(Vector3 destination)
+        {
+            if (Physics.Raycast(destination + Vector3.up * 0.5f, Vector3.down, out RaycastHit hit, 1.2f, ~0, QueryTriggerInteraction.Ignore))
+            {
+                if (TP1ComfortManager.IsRedOrBlocked(hit.collider))
+                    return true;
+            }
+            return false;
         }
 
         private bool ExecuteBlinkTeleport(TeleportRequest request)
