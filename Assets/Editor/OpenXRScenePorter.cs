@@ -141,10 +141,26 @@ namespace LOG8704.Editor
                 return;
             }
 
+            // Ensure XRInteractionManager exists
+            var existingManager = UnityEngine.Object.FindFirstObjectByType<XRInteractionManager>();
+            if (existingManager == null)
+            {
+                var mgrObj = new GameObject("XR Interaction Manager");
+                mgrObj.AddComponent<XRInteractionManager>();
+                Debug.Log("[OpenXRScenePorter] Created XRInteractionManager in scene.");
+            }
+
             var rigInstance = (GameObject)PrefabUtility.InstantiatePrefab(rigPrefab, scene);
             rigInstance.name = "XR Origin (XR Rig)";
             rigInstance.transform.position = Vector3.zero;
             rigInstance.transform.rotation = Quaternion.identity;
+
+            // Configure Floor tracking
+            var xrOrigin = rigInstance.GetComponent<XROrigin>();
+            if (xrOrigin != null)
+            {
+                xrOrigin.RequestedTrackingOriginMode = XROrigin.TrackingOriginMode.Floor;
+            }
 
             // Locate camera
             var cam = rigInstance.GetComponentInChildren<Camera>(true);

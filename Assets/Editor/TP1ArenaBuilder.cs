@@ -14,6 +14,8 @@ using UnityEngine.XR.Interaction.Toolkit.Locomotion.Comfort;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Movement;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Turning;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
 using UnityEngine.XR.Interaction.Toolkit.UI;
 using Unity.XR.CoreUtils;
@@ -92,7 +94,10 @@ namespace LOG8704.Editor
             // 4. Setup Lighting
             SetupLighting();
 
-            // 5. Build Environment Hierarchy
+            // 5. Ensure XRInteractionManager
+            EnsureInteractionManager();
+
+            // 6. Build Environment Hierarchy
             var envRoot = new GameObject("Environment");
 
             // A. Walkable Floor with TeleportationArea
@@ -107,7 +112,13 @@ namespace LOG8704.Editor
             // D. Teleportable Platform Box (elevated platform with valid TeleportationArea)
             BuildTeleportPlatformBox(envRoot.transform, platformMat, platformTopMat);
 
-            // 6. Setup XR Rig and Locomotion
+            // E. Interaction Test Station (Pedestal with dynamic XRGrabInteractable cube and XRSocketInteractor)
+            var pedestalMat = GetOrCreateMaterial("Assets/Materials/M_ArenaPedestal.mat", new Color(0.14f, 0.16f, 0.20f), 0.2f);
+            var grabMat = GetOrCreateMaterial("Assets/Materials/M_GrabbableCube.mat", new Color(0.18f, 0.55f, 0.92f), 0.4f);
+            var socketRingMat = GetOrCreateMaterial("Assets/Materials/M_SocketRing.mat", new Color(0.92f, 0.65f, 0.15f), 0.5f);
+            BuildInteractionTestStation(envRoot.transform, pedestalMat, grabMat, socketRingMat);
+
+            // 7. Setup XR Rig and Locomotion
             var rigInstance = SetupXRRig(scene, preservedWristPos, preservedWristRot);
 
             // 7. Setup EventSystem
@@ -173,10 +184,21 @@ namespace LOG8704.Editor
                 UnityEngine.Object.DestroyImmediate(r.gameObject);
             }
 
-            // 3. Setup EventSystem with XRUIInputModule
+            // 3. Ensure XRInteractionManager & Setup EventSystem with XRUIInputModule
+            EnsureInteractionManager();
             SetupEventSystem();
 
-            // 4. Configure TeleportationArea on all ground and elevated surfaces (boxes, crates, blocks, platforms, ramps, stairs)
+            // Strip pre-existing TeleportationAreas from props to avoid teleport traps
+            var allExistingTeleportAreas = UnityEngine.Object.FindObjectsByType<TeleportationArea>(FindObjectsSortMode.None);
+            foreach (var area in allExistingTeleportAreas)
+            {
+                if (area.gameObject.name != "Safety_Teleport_Floor")
+                {
+                    UnityEngine.Object.DestroyImmediate(area);
+                }
+            }
+
+            // 4. Configure TeleportationArea on all walkable ground and elevated platforms
             var colliders = UnityEngine.Object.FindObjectsByType<Collider>(FindObjectsSortMode.None);
             int surfaceCount = 0;
             foreach (var col in colliders)
@@ -187,10 +209,11 @@ namespace LOG8704.Editor
                 string p = col.transform.parent != null ? col.transform.parent.name.ToLowerInvariant() : "";
                 string fullName = n + " " + p;
 
-                // Explicit exclusions: walls, columns, pillars, doors, fences, small handheld/decor items
+                // Explicit exclusions: walls, columns, pillars, doors, fences, crates, wheels, planes, small items
                 if (fullName.Contains("wall") || fullName.Contains("fence") || fullName.Contains("door") || 
                     fullName.Contains("window") || fullName.Contains("boundary") || fullName.Contains("column") ||
-                    fullName.Contains("pillar") || fullName.Contains("frame") ||
+                    fullName.Contains("pillar") || fullName.Contains("frame") || fullName.Contains("crate") || fullName.Contains("box") ||
+                    fullName.Contains("wheel") || fullName.Contains("tire") || fullName.Contains("plane") ||
                     fullName.Contains("tree") || fullName.Contains("sword") || fullName.Contains("coin") || fullName.Contains("cone") ||
                     fullName.Contains("arrow") || fullName.Contains("target") || fullName.Contains("controller") || fullName.Contains("hand"))
                 {
@@ -467,6 +490,82 @@ namespace LOG8704.Editor
             Debug.Log("[TP1ArenaBuilder] Teleport Platform Box created with TeleportationArea on top surface.");
         }
 
+        private static void BuildInteractionTestStation(Transform parent, Material tableMat, Material cubeMat, Material socketMat)
+        {
+            var stationRoot = new GameObject("Interaction_Test_Station");
+            stationRoot.transform.SetParent(parent, false);
+            stationRoot.transform.localPosition = new Vector3(-4.0f, 0f, 2.0f);
+
+            // 1. Pedestal Table (Blocks movement and provides surface for items)
+            float tableHeight = 0.8f;
+            var table = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            table.name = "Station_Pedestal";
+            table.transform.SetParent(stationRoot.transform, false);
+            table.transform.localPosition = new Vector3(0f, tableHeight * 0.5f, 0f);
+            table.transform.localScale = new Vector3(1.6f, tableHeight, 0.9f);
+            if (tableMat != null)
+                table.GetComponent<Renderer>().sharedMaterial = tableMat;
+
+            // 2. Grabbable Dynamic Cube (XRGrabInteractable)
+            var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            cube.name = "Grabbable_Cube";
+            cube.transform.SetParent(stationRoot.transform, false);
+            cube.transform.localPosition = new Vector3(-0.4f, tableHeight + 0.12f, 0f);
+            cube.transform.localScale = new Vector3(0.22f, 0.22f, 0.22f);
+            if (cubeMat != null)
+                cube.GetComponent<Renderer>().sharedMaterial = cubeMat;
+
+            var rb = cube.AddComponent<Rigidbody>();
+            rb.mass = 1.0f;
+            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+
+            var grab = cube.AddComponent<XRGrabInteractable>();
+            grab.movementType = XRBaseInteractable.MovementType.VelocityTracking;
+            grab.throwOnDetach = true;
+            grab.throwVelocityScale = 1.2f;
+            grab.interactionLayers = unchecked((int)2147483648) | 1;
+
+            // 3. Socket Interactor (XRSocketInteractor)
+            var socketPad = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            socketPad.name = "Socket_Pedestal_Pad";
+            socketPad.transform.SetParent(stationRoot.transform, false);
+            socketPad.transform.localPosition = new Vector3(0.4f, tableHeight + 0.02f, 0f);
+            socketPad.transform.localScale = new Vector3(0.32f, 0.02f, 0.32f);
+            if (socketMat != null)
+                socketPad.GetComponent<Renderer>().sharedMaterial = socketMat;
+
+            // Remove cylinder collider so it doesn't collide with the socket trigger
+            var cylCol = socketPad.GetComponent<Collider>();
+            if (cylCol != null) UnityEngine.Object.DestroyImmediate(cylCol);
+
+            var socketObj = new GameObject("Socket_Receptacle");
+            socketObj.transform.SetParent(socketPad.transform, false);
+            socketObj.transform.localPosition = new Vector3(0f, 0.15f, 0f);
+
+            var socketCol = socketObj.AddComponent<SphereCollider>();
+            socketCol.isTrigger = true;
+            socketCol.radius = 0.25f;
+
+            var socket = socketObj.AddComponent<XRSocketInteractor>();
+            socket.socketActive = true;
+            socket.showInteractableHoverMeshes = true;
+            socket.interactionLayers = unchecked((int)2147483648) | 1;
+
+            Debug.Log("[TP1ArenaBuilder] Interaction Test Station created with Pedestal, Dynamic XRGrabInteractable Cube, and XRSocketInteractor.");
+        }
+
+        private static XRInteractionManager EnsureInteractionManager()
+        {
+            var mgr = UnityEngine.Object.FindFirstObjectByType<XRInteractionManager>();
+            if (mgr == null)
+            {
+                var mgrObj = new GameObject("XR Interaction Manager");
+                mgr = mgrObj.AddComponent<XRInteractionManager>();
+                Debug.Log("[TP1ArenaBuilder] Created XRInteractionManager in scene.");
+            }
+            return mgr;
+        }
+
         private static GameObject SetupXRRig(Scene scene, Vector3? initialWristPos = null, Vector3? initialWristRot = null)
         {
             var rigPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(XrOriginPrefabPath);
@@ -510,6 +609,11 @@ namespace LOG8704.Editor
 
             // Setup CharacterController on Origin for vertical collision stopping
             var xrOrigin = rigInstance.GetComponent<XROrigin>();
+            if (xrOrigin != null)
+            {
+                xrOrigin.RequestedTrackingOriginMode = XROrigin.TrackingOriginMode.Floor;
+            }
+
             GameObject originObj = xrOrigin != null && xrOrigin.Origin != null ? xrOrigin.Origin : rigInstance;
 
             var characterController = originObj.GetComponent<CharacterController>();
@@ -522,6 +626,15 @@ namespace LOG8704.Editor
             characterController.center = new Vector3(0f, 0.9f, 0f);
             characterController.skinWidth = 0.05f;
             characterController.minMoveDistance = 0f;
+
+            // Attach CharacterControllerDriver to dynamically track HMD height & position
+            var ccDriver = rigInstance.GetComponent<CharacterControllerDriver>();
+            if (ccDriver == null)
+            {
+                ccDriver = rigInstance.AddComponent<CharacterControllerDriver>();
+            }
+            ccDriver.minHeight = 0.5f;
+            ccDriver.maxHeight = 2.2f;
 
             // Ensure LocomotionMediator & XRBodyTransformer exist
             var mediator = rigInstance.GetComponentInChildren<LocomotionMediator>(true);
@@ -660,7 +773,7 @@ namespace LOG8704.Editor
                 Debug.LogWarning("[TP1ArenaBuilder] Left Controller transform not found for Wrist UI attachment!");
             }
 
-            // Configure Joystick Assignments: Left Stick = View Only, Right Stick = Locomotion Only
+            // Configure Joystick Assignments: Left Stick = Locomotion Only, Right Stick = View Only
             ConfigureJoystickAssignments(rigInstance);
 
             Debug.Log("[TP1ArenaBuilder] XR Origin Rig configured with CharacterController, ComfortTeleportation, Dash, Vignette, Forearm Wrist UI, and Joystick Mappings.");
@@ -873,18 +986,32 @@ namespace LOG8704.Editor
             {
                 var soComfort = new SerializedObject(comfortManager);
                 soComfort.Update();
+                var teleRefProp = soComfort.FindProperty("m_TeleportProvider");
+                if (teleRefProp != null) teleRefProp.objectReferenceValue = rigInstance.GetComponentInChildren<ComfortTeleportationProvider>(true);
+                var dashRefProp = soComfort.FindProperty("m_DashProvider");
+                if (dashRefProp != null) dashRefProp.objectReferenceValue = rigInstance.GetComponentInChildren<DashProvider>(true);
                 var moveRefProp = soComfort.FindProperty("m_ContinuousMoveProvider");
                 if (moveRefProp != null) moveRefProp.objectReferenceValue = moveProvider;
                 var snapRefProp = soComfort.FindProperty("m_SnapTurnProvider");
                 if (snapRefProp != null) snapRefProp.objectReferenceValue = snapTurn;
                 var contTurnRefProp = soComfort.FindProperty("m_ContinuousTurnProvider");
                 if (contTurnRefProp != null) contTurnRefProp.objectReferenceValue = continuousTurn;
+                var vigRefProp = soComfort.FindProperty("m_VignetteController");
+                if (vigRefProp != null) vigRefProp.objectReferenceValue = rigInstance.GetComponentInChildren<TunnelingVignetteController>(true);
                 var snapActProp = soComfort.FindProperty("m_RightSnapTurnAction");
                 if (snapActProp != null) snapActProp.objectReferenceValue = rightSnapTurnAction;
                 var contActProp = soComfort.FindProperty("m_RightTurnAction");
                 if (contActProp != null) contActProp.objectReferenceValue = rightTurnAction;
                 soComfort.ApplyModifiedPropertiesWithoutUndo();
                 EditorUtility.SetDirty(comfortManager);
+            }
+
+            // 6. Connect CharacterControllerDriver locomotion provider
+            var ccDriver = rigInstance.GetComponent<CharacterControllerDriver>();
+            if (ccDriver != null)
+            {
+                ccDriver.locomotionProvider = moveProvider;
+                EditorUtility.SetDirty(ccDriver);
             }
 
             Debug.Log("[TP1ArenaBuilder] Joystick assignments configured: Left = Locomotion Only (Move/Teleport/Dash), Right = View Only (Snap/Smooth Turn).");
