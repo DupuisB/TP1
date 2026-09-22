@@ -52,6 +52,14 @@ namespace LOG8704.Editor
                     Debug.Log("[TP1ArenaBuilder] Automatically configuring Synty Demo scene with elevated surfaces (boxes, crates, platforms, ramps)...");
                     SetupSyntyDemoScene();
                 }
+
+                if (!EditorApplication.isPlaying && !EditorPrefs.GetBool("TP1_Pistols_V1", false))
+                {
+                    EditorPrefs.SetBool("TP1_Pistols_V1", true);
+                    Debug.Log("[TP1ArenaBuilder] Automatically configuring Grabbable Water Pistols in scenes...");
+                    WaterPistolSetupUtility.CreateOrUpdateWaterPistolPrefab();
+                    SetupSyntyDemoScene();
+                }
             };
         }
 
@@ -276,6 +284,9 @@ namespace LOG8704.Editor
                 rigInstance.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
             }
 
+            // 5b. Setup Water Pistol Pickup Station near player spawn (0, 0.05, 10)
+            SetupDemoWaterPistolStation(scene);
+
             // 6. Save scene
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, SyntyScenePath);
@@ -496,7 +507,7 @@ namespace LOG8704.Editor
             table.name = "Station_Pedestal";
             table.transform.SetParent(stationRoot.transform, false);
             table.transform.localPosition = new Vector3(0f, tableHeight * 0.5f, 0f);
-            table.transform.localScale = new Vector3(1.6f, tableHeight, 0.9f);
+            table.transform.localScale = new Vector3(2.2f, tableHeight, 0.9f);
             if (tableMat != null)
                 table.GetComponent<Renderer>().sharedMaterial = tableMat;
 
@@ -504,7 +515,7 @@ namespace LOG8704.Editor
             var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
             cube.name = "Grabbable_Cube";
             cube.transform.SetParent(stationRoot.transform, false);
-            cube.transform.localPosition = new Vector3(-0.4f, tableHeight + 0.12f, 0f);
+            cube.transform.localPosition = new Vector3(-0.65f, tableHeight + 0.12f, 0f);
             cube.transform.localScale = new Vector3(0.22f, 0.22f, 0.22f);
             if (cubeMat != null)
                 cube.GetComponent<Renderer>().sharedMaterial = cubeMat;
@@ -523,7 +534,7 @@ namespace LOG8704.Editor
             var socketPad = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             socketPad.name = "Socket_Pedestal_Pad";
             socketPad.transform.SetParent(stationRoot.transform, false);
-            socketPad.transform.localPosition = new Vector3(0.4f, tableHeight + 0.02f, 0f);
+            socketPad.transform.localPosition = new Vector3(0.65f, tableHeight + 0.02f, 0f);
             socketPad.transform.localScale = new Vector3(0.32f, 0.02f, 0.32f);
             if (socketMat != null)
                 socketPad.GetComponent<Renderer>().sharedMaterial = socketMat;
@@ -545,7 +556,104 @@ namespace LOG8704.Editor
             socket.showInteractableHoverMeshes = true;
             socket.interactionLayers = unchecked((int)2147483648) | 1;
 
-            Debug.Log("[TP1ArenaBuilder] Interaction Test Station created with Pedestal, Dynamic XRGrabInteractable Cube, and XRSocketInteractor.");
+            // 4. Grabbable Water Pistols on Pedestal Table
+            var pistolPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(WaterPistolSetupUtility.TargetPrefabPath);
+            if (pistolPrefab == null)
+            {
+                pistolPrefab = WaterPistolSetupUtility.CreateOrUpdateWaterPistolPrefab();
+            }
+
+            if (pistolPrefab != null)
+            {
+                // Primary pistol on center of table facing forward
+                var pistol1 = (GameObject)PrefabUtility.InstantiatePrefab(pistolPrefab, stationRoot.transform);
+                pistol1.name = "WaterPistol_Pedestal_Main";
+                pistol1.transform.localPosition = new Vector3(0.05f, tableHeight + 0.04f, 0f);
+                pistol1.transform.localRotation = Quaternion.Euler(0f, 90f, 90f);
+
+                // Secondary pistol alongside
+                var pistol2 = (GameObject)PrefabUtility.InstantiatePrefab(pistolPrefab, stationRoot.transform);
+                pistol2.name = "WaterPistol_Pedestal_Secondary";
+                pistol2.transform.localPosition = new Vector3(-0.25f, tableHeight + 0.04f, 0f);
+                pistol2.transform.localRotation = Quaternion.Euler(0f, -90f, -90f);
+            }
+
+            Debug.Log("[TP1ArenaBuilder] Interaction Test Station created with Pedestal, Dynamic Cube, XRSocketInteractor, and 2 Grabbable Water Pistols.");
+        }
+
+        private static void SetupDemoWaterPistolStation(Scene scene)
+        {
+            var existingStation = GameObject.Find("Water_Pistol_Pickup_Station");
+            if (existingStation != null)
+            {
+                UnityEngine.Object.DestroyImmediate(existingStation);
+            }
+
+            var stationRoot = new GameObject("Water_Pistol_Pickup_Station");
+            // Placed ~1.6m in front of player spawn at (0, 0.05, 10) facing 180°
+            stationRoot.transform.position = new Vector3(0.4f, 0.05f, 8.4f);
+            stationRoot.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+
+            var pedestalMat = GetOrCreateMaterial("Assets/Materials/M_ArenaPedestal.mat", new Color(0.14f, 0.16f, 0.20f), 0.2f);
+            var socketRingMat = GetOrCreateMaterial("Assets/Materials/M_SocketRing.mat", new Color(0.92f, 0.65f, 0.15f), 0.5f);
+
+            float tableHeight = 0.82f;
+            var table = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            table.name = "Station_Table";
+            table.transform.SetParent(stationRoot.transform, false);
+            table.transform.localPosition = new Vector3(0f, tableHeight * 0.5f, 0f);
+            table.transform.localScale = new Vector3(1.6f, tableHeight, 0.7f);
+            if (pedestalMat != null)
+                table.GetComponent<Renderer>().sharedMaterial = pedestalMat;
+
+            // Load or build water pistol prefab
+            var pistolPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(WaterPistolSetupUtility.TargetPrefabPath);
+            if (pistolPrefab == null)
+            {
+                pistolPrefab = WaterPistolSetupUtility.CreateOrUpdateWaterPistolPrefab();
+            }
+
+            if (pistolPrefab != null)
+            {
+                // Right hand pistol - resting ready to be picked up
+                var pistolRight = (GameObject)PrefabUtility.InstantiatePrefab(pistolPrefab, stationRoot.transform);
+                pistolRight.name = "WaterPistol_Right";
+                pistolRight.transform.localPosition = new Vector3(0.35f, tableHeight + 0.04f, 0f);
+                pistolRight.transform.localRotation = Quaternion.Euler(0f, 180f, 90f);
+
+                // Left hand pistol - resting ready to be picked up
+                var pistolLeft = (GameObject)PrefabUtility.InstantiatePrefab(pistolPrefab, stationRoot.transform);
+                pistolLeft.name = "WaterPistol_Left";
+                pistolLeft.transform.localPosition = new Vector3(-0.35f, tableHeight + 0.04f, 0f);
+                pistolLeft.transform.localRotation = Quaternion.Euler(0f, 180f, -90f);
+            }
+
+            // Holster Socket in the center of the table
+            var socketPad = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            socketPad.name = "Holster_Socket_Pad";
+            socketPad.transform.SetParent(stationRoot.transform, false);
+            socketPad.transform.localPosition = new Vector3(0f, tableHeight + 0.01f, 0f);
+            socketPad.transform.localScale = new Vector3(0.24f, 0.015f, 0.24f);
+            if (socketRingMat != null)
+                socketPad.GetComponent<Renderer>().sharedMaterial = socketRingMat;
+
+            var cylCol = socketPad.GetComponent<Collider>();
+            if (cylCol != null) UnityEngine.Object.DestroyImmediate(cylCol);
+
+            var socketObj = new GameObject("Holster_Socket");
+            socketObj.transform.SetParent(socketPad.transform, false);
+            socketObj.transform.localPosition = new Vector3(0f, 0.12f, 0f);
+
+            var socketCol = socketObj.AddComponent<SphereCollider>();
+            socketCol.isTrigger = true;
+            socketCol.radius = 0.22f;
+
+            var socket = socketObj.AddComponent<XRSocketInteractor>();
+            socket.socketActive = true;
+            socket.showInteractableHoverMeshes = true;
+            socket.interactionLayers = unchecked((int)2147483648) | 1;
+
+            Debug.Log("[TP1ArenaBuilder] Water Pistol Pickup Station placed in Demo scene in front of player spawn with 2 grabbable pistols & holster socket.");
         }
 
         private static XRInteractionManager EnsureInteractionManager()
