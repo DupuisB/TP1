@@ -14,6 +14,8 @@ using UnityEngine.XR.Interaction.Toolkit.Locomotion.Comfort;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Movement;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Turning;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
 using UnityEngine.XR.Interaction.Toolkit.UI;
 using Unity.XR.CoreUtils;
@@ -27,6 +29,7 @@ namespace LOG8704.Editor
     {
         private const string TargetSceneDir = "Assets/Scenes";
         public const string TargetScenePath = "Assets/Scenes/TP1_TestArena.unity";
+        public const string SyntyScenePath = "Assets/Synty/PolygonStarter/Scenes/Demo.unity";
         private const string MaterialsDir = "Assets/Materials";
         private const string XrOriginPrefabPath = "Assets/Samples/XR Interaction Toolkit/3.5.1/Starter Assets/Prefabs/XR Origin (XR Rig).prefab";
         private const string TunnelingVignettePrefabPath = "Assets/Samples/XR Interaction Toolkit/3.5.1/Starter Assets/TunnelingVignette/TunnelingVignette.prefab";
@@ -41,6 +44,13 @@ namespace LOG8704.Editor
                     EditorPrefs.SetBool("TP1_Rebuild_V6", false);
                     Debug.Log("[TP1ArenaBuilder] Generating pristine TP1 Test Arena scene with unpacked rig (V6)...");
                     BuildArenaScene();
+                }
+
+                if (!EditorApplication.isPlaying && !EditorPrefs.GetBool("TP1_Boxes_Teleportable_V1", false))
+                {
+                    EditorPrefs.SetBool("TP1_Boxes_Teleportable_V1", true);
+                    Debug.Log("[TP1ArenaBuilder] Automatically configuring Synty Demo scene with elevated surfaces (boxes, crates, platforms, ramps)...");
+                    SetupSyntyDemoScene();
                 }
             };
         }
@@ -84,7 +94,10 @@ namespace LOG8704.Editor
             // 4. Setup Lighting
             SetupLighting();
 
-            // 5. Build Environment Hierarchy
+            // 5. Ensure XRInteractionManager
+            EnsureInteractionManager();
+
+            // 6. Build Environment Hierarchy
             var envRoot = new GameObject("Environment");
 
             // A. Walkable Floor with TeleportationArea
@@ -99,7 +112,13 @@ namespace LOG8704.Editor
             // D. Teleportable Platform Box (elevated platform with valid TeleportationArea)
             BuildTeleportPlatformBox(envRoot.transform, platformMat, platformTopMat);
 
-            // 6. Setup XR Rig and Locomotion
+            // E. Interaction Test Station (Pedestal with dynamic XRGrabInteractable cube and XRSocketInteractor)
+            var pedestalMat = GetOrCreateMaterial("Assets/Materials/M_ArenaPedestal.mat", new Color(0.14f, 0.16f, 0.20f), 0.2f);
+            var grabMat = GetOrCreateMaterial("Assets/Materials/M_GrabbableCube.mat", new Color(0.18f, 0.55f, 0.92f), 0.4f);
+            var socketRingMat = GetOrCreateMaterial("Assets/Materials/M_SocketRing.mat", new Color(0.92f, 0.65f, 0.15f), 0.5f);
+            BuildInteractionTestStation(envRoot.transform, pedestalMat, grabMat, socketRingMat);
+
+            // 7. Setup XR Rig and Locomotion
             var rigInstance = SetupXRRig(scene, preservedWristPos, preservedWristRot);
 
             // 7. Setup EventSystem
@@ -116,6 +135,159 @@ namespace LOG8704.Editor
             AssetDatabase.Refresh();
 
             Debug.Log("[TP1ArenaBuilder] Successfully built and configured LOG8704 TP1 Test Arena!");
+        }
+
+        [MenuItem("LOG8704/Setup Synty Demo Scene for VR")]
+        public static void SetupSyntyDemoScene()
+        {
+            Debug.Log($"[TP1ArenaBuilder] Starting VR setup for Synty Demo scene ({SyntyScenePath})...");
+
+            if (!File.Exists(SyntyScenePath))
+            {
+                Debug.LogError($"[TP1ArenaBuilder] Synty Demo scene not found at {SyntyScenePath}!");
+                return;
+            }
+
+            // 0. Preserve wrist position if any in current active scene
+            Vector3? preservedWristPos = null;
+            Vector3? preservedWristRot = null;
+            var existingWristInActiveScene = UnityEngine.Object.FindFirstObjectByType<WristUIController>();
+            if (existingWristInActiveScene != null)
+            {
+                preservedWristPos = existingWristInActiveScene.uiLocalPosition;
+                preservedWristRot = existingWristInActiveScene.uiLocalEuler;
+            }
+            else
+            {
+                preservedWristPos = new Vector3(-0.04f, -0.2f, -0.2f);
+                preservedWristRot = new Vector3(0f, 100f, 10f);
+            }
+
+            // 1. Open the Synty Demo scene
+            var scene = EditorSceneManager.OpenScene(SyntyScenePath, OpenSceneMode.Single);
+
+            // 2. Remove non-XR desktop Camera(s) and AudioListener(s)
+            var cameras = UnityEngine.Object.FindObjectsByType<Camera>(FindObjectsSortMode.None);
+            foreach (var cam in cameras)
+            {
+                if (cam.GetComponentInParent<XROrigin>() == null)
+                {
+                    Debug.Log($"[TP1ArenaBuilder] Removing non-XR camera: {cam.gameObject.name}");
+                    UnityEngine.Object.DestroyImmediate(cam.gameObject);
+                }
+            }
+
+            // Remove any existing XR Origin to prevent duplicates
+            var existingRigs = UnityEngine.Object.FindObjectsByType<XROrigin>(FindObjectsSortMode.None);
+            foreach (var r in existingRigs)
+            {
+                UnityEngine.Object.DestroyImmediate(r.gameObject);
+            }
+
+            // 3. Ensure XRInteractionManager & Setup EventSystem with XRUIInputModule
+            EnsureInteractionManager();
+            SetupEventSystem();
+
+            // Strip pre-existing TeleportationAreas from props to avoid teleport traps
+            var allExistingTeleportAreas = UnityEngine.Object.FindObjectsByType<TeleportationArea>(FindObjectsSortMode.None);
+            foreach (var area in allExistingTeleportAreas)
+            {
+                UnityEngine.Object.DestroyImmediate(area);
+            }
+
+            // 4. Configure TeleportationArea on all walkable ground and elevated platforms
+            var colliders = UnityEngine.Object.FindObjectsByType<Collider>(FindObjectsSortMode.None);
+            int surfaceCount = 0;
+            foreach (var col in colliders)
+            {
+                if (col.isTrigger) continue;
+
+                // If object is red (red.mat), has NoTeleportZone, or is marked to block teleportation:
+                // Ensure TeleportationArea is removed.
+                if (TP1ComfortManager.IsRedOrBlocked(col))
+                {
+                    var existingArea = col.GetComponent<TeleportationArea>();
+                    if (existingArea != null)
+                    {
+                        UnityEngine.Object.DestroyImmediate(existingArea);
+                    }
+                    continue;
+                }
+
+                // Match walkable ground, floors, platforms, ramps, stairs, modular blocks, crates, roofs, decks
+                if (TP1ComfortManager.IsWalkableSurface(col))
+                {
+                    var teleArea = col.GetComponent<TeleportationArea>();
+                    if (teleArea == null)
+                    {
+                        teleArea = col.gameObject.AddComponent<TeleportationArea>();
+                    }
+                    teleArea.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
+                    teleArea.matchOrientation = MatchOrientation.WorldSpaceUp;
+                    teleArea.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+                    teleArea.filterSelectionByHitNormal = true;
+                    teleArea.upNormalToleranceDegrees = 60f;
+                    surfaceCount++;
+                }
+                else
+                {
+                    var existingArea = col.GetComponent<TeleportationArea>();
+                    if (existingArea != null)
+                    {
+                        UnityEngine.Object.DestroyImmediate(existingArea);
+                    }
+                }
+            }
+
+            // Cleanup any stray TeleportationAreas on red or non-walkable objects
+            var allAreas = UnityEngine.Object.FindObjectsByType<TeleportationArea>(FindObjectsSortMode.None);
+            foreach (var area in allAreas)
+            {
+                var col = area.GetComponent<Collider>();
+                if (col == null || TP1ComfortManager.IsRedOrBlocked(col) || !TP1ComfortManager.IsWalkableSurface(col))
+                {
+                    UnityEngine.Object.DestroyImmediate(area);
+                }
+            }
+
+            Debug.Log($"[TP1ArenaBuilder] Configured TeleportationArea on {surfaceCount} valid surfaces (ground, floors, platforms, blocks, crates, ramps). Red surfaces strictly excluded.");
+
+            // Safety floor underneath to prevent falling into void (strictly NO TeleportationArea)
+            var safetyFloor = GameObject.Find("Safety_Teleport_Floor");
+            if (safetyFloor == null)
+            {
+                safetyFloor = new GameObject("Safety_Teleport_Floor");
+                safetyFloor.transform.position = new Vector3(0f, -0.05f, 0f);
+                var boxCol = safetyFloor.AddComponent<BoxCollider>();
+                boxCol.size = new Vector3(300f, 0.1f, 300f);
+                boxCol.center = Vector3.zero;
+            }
+            else
+            {
+                var tele = safetyFloor.GetComponent<TeleportationArea>();
+                if (tele != null) UnityEngine.Object.DestroyImmediate(tele);
+            }
+
+            // 5. Setup XR Rig and Locomotion
+            var rigInstance = SetupXRRig(scene, preservedWristPos, preservedWristRot);
+            if (rigInstance != null)
+            {
+                rigInstance.transform.position = new Vector3(0f, 0.05f, 10f);
+                rigInstance.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+            }
+
+            // 6. Save scene
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene, SyntyScenePath);
+            Debug.Log($"[TP1ArenaBuilder] Scene successfully saved to {SyntyScenePath}");
+
+            // 7. Register as Scene 0 in EditorBuildSettings
+            RegisterSceneAsScene0(SyntyScenePath);
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            Debug.Log("[TP1ArenaBuilder] Synty Demo scene successfully configured as active VR locomotion scene!");
         }
 
         private static void EnsureDirectory(string path)
@@ -188,6 +360,10 @@ namespace LOG8704.Editor
             if (matchProp != null) matchProp.intValue = 0; // WorldSpaceUp
             var layersProp = so.FindProperty("m_InteractionLayers.m_Bits");
             if (layersProp != null) layersProp.longValue = 2147483649L;
+            var filterProp = so.FindProperty("m_FilterSelectionByHitNormal");
+            if (filterProp != null) filterProp.boolValue = true;
+            var tolProp = so.FindProperty("m_UpNormalToleranceDegrees");
+            if (tolProp != null) tolProp.floatValue = 75f;
             var colProp = so.FindProperty("m_Colliders");
             if (colProp != null && col != null)
             {
@@ -302,8 +478,86 @@ namespace LOG8704.Editor
             teleportArea.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
             teleportArea.matchOrientation = MatchOrientation.WorldSpaceUp;
             teleportArea.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+            teleportArea.filterSelectionByHitNormal = true;
+            teleportArea.upNormalToleranceDegrees = 75f;
 
             Debug.Log("[TP1ArenaBuilder] Teleport Platform Box created with TeleportationArea on top surface.");
+        }
+
+        private static void BuildInteractionTestStation(Transform parent, Material tableMat, Material cubeMat, Material socketMat)
+        {
+            var stationRoot = new GameObject("Interaction_Test_Station");
+            stationRoot.transform.SetParent(parent, false);
+            stationRoot.transform.localPosition = new Vector3(-4.0f, 0f, 2.0f);
+
+            // 1. Pedestal Table (Blocks movement and provides surface for items)
+            float tableHeight = 0.8f;
+            var table = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            table.name = "Station_Pedestal";
+            table.transform.SetParent(stationRoot.transform, false);
+            table.transform.localPosition = new Vector3(0f, tableHeight * 0.5f, 0f);
+            table.transform.localScale = new Vector3(1.6f, tableHeight, 0.9f);
+            if (tableMat != null)
+                table.GetComponent<Renderer>().sharedMaterial = tableMat;
+
+            // 2. Grabbable Dynamic Cube (XRGrabInteractable)
+            var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            cube.name = "Grabbable_Cube";
+            cube.transform.SetParent(stationRoot.transform, false);
+            cube.transform.localPosition = new Vector3(-0.4f, tableHeight + 0.12f, 0f);
+            cube.transform.localScale = new Vector3(0.22f, 0.22f, 0.22f);
+            if (cubeMat != null)
+                cube.GetComponent<Renderer>().sharedMaterial = cubeMat;
+
+            var rb = cube.AddComponent<Rigidbody>();
+            rb.mass = 1.0f;
+            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+
+            var grab = cube.AddComponent<XRGrabInteractable>();
+            grab.movementType = XRBaseInteractable.MovementType.VelocityTracking;
+            grab.throwOnDetach = true;
+            grab.throwVelocityScale = 1.2f;
+            grab.interactionLayers = unchecked((int)2147483648) | 1;
+
+            // 3. Socket Interactor (XRSocketInteractor)
+            var socketPad = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            socketPad.name = "Socket_Pedestal_Pad";
+            socketPad.transform.SetParent(stationRoot.transform, false);
+            socketPad.transform.localPosition = new Vector3(0.4f, tableHeight + 0.02f, 0f);
+            socketPad.transform.localScale = new Vector3(0.32f, 0.02f, 0.32f);
+            if (socketMat != null)
+                socketPad.GetComponent<Renderer>().sharedMaterial = socketMat;
+
+            // Remove cylinder collider so it doesn't collide with the socket trigger
+            var cylCol = socketPad.GetComponent<Collider>();
+            if (cylCol != null) UnityEngine.Object.DestroyImmediate(cylCol);
+
+            var socketObj = new GameObject("Socket_Receptacle");
+            socketObj.transform.SetParent(socketPad.transform, false);
+            socketObj.transform.localPosition = new Vector3(0f, 0.15f, 0f);
+
+            var socketCol = socketObj.AddComponent<SphereCollider>();
+            socketCol.isTrigger = true;
+            socketCol.radius = 0.25f;
+
+            var socket = socketObj.AddComponent<XRSocketInteractor>();
+            socket.socketActive = true;
+            socket.showInteractableHoverMeshes = true;
+            socket.interactionLayers = unchecked((int)2147483648) | 1;
+
+            Debug.Log("[TP1ArenaBuilder] Interaction Test Station created with Pedestal, Dynamic XRGrabInteractable Cube, and XRSocketInteractor.");
+        }
+
+        private static XRInteractionManager EnsureInteractionManager()
+        {
+            var mgr = UnityEngine.Object.FindFirstObjectByType<XRInteractionManager>();
+            if (mgr == null)
+            {
+                var mgrObj = new GameObject("XR Interaction Manager");
+                mgr = mgrObj.AddComponent<XRInteractionManager>();
+                Debug.Log("[TP1ArenaBuilder] Created XRInteractionManager in scene.");
+            }
+            return mgr;
         }
 
         private static GameObject SetupXRRig(Scene scene, Vector3? initialWristPos = null, Vector3? initialWristRot = null)
@@ -349,6 +603,11 @@ namespace LOG8704.Editor
 
             // Setup CharacterController on Origin for vertical collision stopping
             var xrOrigin = rigInstance.GetComponent<XROrigin>();
+            if (xrOrigin != null)
+            {
+                xrOrigin.RequestedTrackingOriginMode = XROrigin.TrackingOriginMode.Floor;
+            }
+
             GameObject originObj = xrOrigin != null && xrOrigin.Origin != null ? xrOrigin.Origin : rigInstance;
 
             var characterController = originObj.GetComponent<CharacterController>();
@@ -361,6 +620,17 @@ namespace LOG8704.Editor
             characterController.center = new Vector3(0f, 0.9f, 0f);
             characterController.skinWidth = 0.05f;
             characterController.minMoveDistance = 0f;
+
+            // Attach CharacterControllerDriver to dynamically track HMD height & position
+#pragma warning disable CS0618
+            var ccDriver = rigInstance.GetComponent<CharacterControllerDriver>();
+            if (ccDriver == null)
+            {
+                ccDriver = rigInstance.AddComponent<CharacterControllerDriver>();
+            }
+            ccDriver.minHeight = 0.5f;
+            ccDriver.maxHeight = 2.2f;
+#pragma warning restore CS0618
 
             // Ensure LocomotionMediator & XRBodyTransformer exist
             var mediator = rigInstance.GetComponentInChildren<LocomotionMediator>(true);
@@ -499,7 +769,7 @@ namespace LOG8704.Editor
                 Debug.LogWarning("[TP1ArenaBuilder] Left Controller transform not found for Wrist UI attachment!");
             }
 
-            // Configure Joystick Assignments: Left Stick = View Only, Right Stick = Locomotion Only
+            // Configure Joystick Assignments: Left Stick = Locomotion Only, Right Stick = View Only
             ConfigureJoystickAssignments(rigInstance);
 
             Debug.Log("[TP1ArenaBuilder] XR Origin Rig configured with CharacterController, ComfortTeleportation, Dash, Vignette, Forearm Wrist UI, and Joystick Mappings.");
@@ -532,16 +802,17 @@ namespace LOG8704.Editor
             GameObject locomotionHost = locomotionObj != null ? locomotionObj.gameObject : rigInstance;
 
             // Load Input Action References from Starter Assets
-            var leftTurnAction = FindActionReference("XRI Left Locomotion", "Turn");
-            var leftSnapTurnAction = FindActionReference("XRI Left Locomotion", "Snap Turn");
-            var rightMoveAction = FindActionReference("XRI Right Locomotion", "Move");
-            var rightTeleportModeAction = FindActionReference("XRI Right Locomotion", "Teleport Mode");
-            var rightTeleportModeCancelAction = FindActionReference("XRI Right Locomotion", "Teleport Mode Cancel");
+            var leftMoveAction = FindActionReference("XRI Left Locomotion", "Move");
+            var leftTeleportModeAction = FindActionReference("XRI Left Locomotion", "Teleport Mode");
+            var leftTeleportModeCancelAction = FindActionReference("XRI Left Locomotion", "Teleport Mode Cancel");
+
+            var rightTurnAction = FindActionReference("XRI Right Locomotion", "Turn");
+            var rightSnapTurnAction = FindActionReference("XRI Right Locomotion", "Snap Turn");
 
             var cam = rigInstance.GetComponentInChildren<Camera>(true);
             Transform headTransform = cam != null ? cam.transform : rigInstance.transform;
 
-            // 1. ContinuousMoveProvider: Exclusively on RIGHT Joystick (Translation only, no rotation)
+            // 1. ContinuousMoveProvider: Exclusively on LEFT Joystick (Translation only, no rotation)
             var moveProvider = locomotionHost.GetComponentInChildren<ContinuousMoveProvider>(true);
             if (moveProvider == null)
             {
@@ -560,22 +831,22 @@ namespace LOG8704.Editor
             var forwardProp = soMove.FindProperty("m_ForwardSource");
             if (forwardProp != null) forwardProp.objectReferenceValue = headTransform;
 
-            // Left Stick: Disabled for translation
+            // Left Stick: Enabled for translation (InputSourceMode.InputActionReference = 2)
             var leftMoveMode = soMove.FindProperty("m_LeftHandMoveInput.m_InputSourceMode");
-            if (leftMoveMode != null) leftMoveMode.intValue = 0; // Unused
+            if (leftMoveMode != null) leftMoveMode.intValue = 2; // InputActionReference
             var leftMoveRef = soMove.FindProperty("m_LeftHandMoveInput.m_InputActionReference");
-            if (leftMoveRef != null) leftMoveRef.objectReferenceValue = null;
+            if (leftMoveRef != null) leftMoveRef.objectReferenceValue = leftMoveAction;
 
-            // Right Stick: Enabled for translation (InputSourceMode.InputActionReference = 2)
+            // Right Stick: Disabled for translation
             var rightMoveMode = soMove.FindProperty("m_RightHandMoveInput.m_InputSourceMode");
-            if (rightMoveMode != null) rightMoveMode.intValue = 2; // InputActionReference
+            if (rightMoveMode != null) rightMoveMode.intValue = 0; // Unused
             var rightMoveRef = soMove.FindProperty("m_RightHandMoveInput.m_InputActionReference");
-            if (rightMoveRef != null) rightMoveRef.objectReferenceValue = rightMoveAction;
+            if (rightMoveRef != null) rightMoveRef.objectReferenceValue = null;
 
             soMove.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(moveProvider);
 
-            // 2. SnapTurnProvider: Exclusively on LEFT Joystick (Rotation only, no translation)
+            // 2. SnapTurnProvider: Exclusively on RIGHT Joystick (Rotation only, no translation)
             var snapTurn = locomotionHost.GetComponentInChildren<SnapTurnProvider>(true);
             if (snapTurn == null)
             {
@@ -596,22 +867,22 @@ namespace LOG8704.Editor
             var enableAroundProp = soSnap.FindProperty("m_EnableTurnAround");
             if (enableAroundProp != null) enableAroundProp.boolValue = true;
 
-            // Left Stick: Enabled for Snap Turn (InputSourceMode.InputActionReference = 2)
+            // Left Stick: Disabled for Snap Turn
             var leftSnapMode = soSnap.FindProperty("m_LeftHandTurnInput.m_InputSourceMode");
-            if (leftSnapMode != null) leftSnapMode.intValue = 2; // InputActionReference
+            if (leftSnapMode != null) leftSnapMode.intValue = 0; // Unused
             var leftSnapRef = soSnap.FindProperty("m_LeftHandTurnInput.m_InputActionReference");
-            if (leftSnapRef != null) leftSnapRef.objectReferenceValue = leftSnapTurnAction;
+            if (leftSnapRef != null) leftSnapRef.objectReferenceValue = null;
 
-            // Right Stick: Disabled for Snap Turn
+            // Right Stick: Enabled for Snap Turn (InputSourceMode.InputActionReference = 2)
             var rightSnapMode = soSnap.FindProperty("m_RightHandTurnInput.m_InputSourceMode");
-            if (rightSnapMode != null) rightSnapMode.intValue = 0; // Unused
+            if (rightSnapMode != null) rightSnapMode.intValue = 2; // InputActionReference
             var rightSnapRef = soSnap.FindProperty("m_RightHandTurnInput.m_InputActionReference");
-            if (rightSnapRef != null) rightSnapRef.objectReferenceValue = null;
+            if (rightSnapRef != null) rightSnapRef.objectReferenceValue = rightSnapTurnAction;
 
             soSnap.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(snapTurn);
 
-            // 3. ContinuousTurnProvider: Exclusively on LEFT Joystick (Rotation only, no translation)
+            // 3. ContinuousTurnProvider: Exclusively on RIGHT Joystick (Rotation only, no translation)
             var continuousTurn = locomotionHost.GetComponentInChildren<ContinuousTurnProvider>(true);
             if (continuousTurn == null)
             {
@@ -630,17 +901,17 @@ namespace LOG8704.Editor
             var contEnableAroundProp = soCont.FindProperty("m_EnableTurnAround");
             if (contEnableAroundProp != null) contEnableAroundProp.boolValue = false;
 
-            // Left Stick: Enabled for Continuous Smooth Turn (InputSourceMode.InputActionReference = 2)
+            // Left Stick: Disabled for Continuous Turn
             var leftContMode = soCont.FindProperty("m_LeftHandTurnInput.m_InputSourceMode");
-            if (leftContMode != null) leftContMode.intValue = 2; // InputActionReference
+            if (leftContMode != null) leftContMode.intValue = 0; // Unused
             var leftContRef = soCont.FindProperty("m_LeftHandTurnInput.m_InputActionReference");
-            if (leftContRef != null) leftContRef.objectReferenceValue = leftTurnAction;
+            if (leftContRef != null) leftContRef.objectReferenceValue = null;
 
-            // Right Stick: Disabled for Continuous Turn
+            // Right Stick: Enabled for Continuous Smooth Turn (InputSourceMode.InputActionReference = 2)
             var rightContMode = soCont.FindProperty("m_RightHandTurnInput.m_InputSourceMode");
-            if (rightContMode != null) rightContMode.intValue = 0; // Unused
+            if (rightContMode != null) rightContMode.intValue = 2; // InputActionReference
             var rightContRef = soCont.FindProperty("m_RightHandTurnInput.m_InputActionReference");
-            if (rightContRef != null) rightContRef.objectReferenceValue = null;
+            if (rightContRef != null) rightContRef.objectReferenceValue = rightTurnAction;
 
             soCont.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(continuousTurn);
@@ -661,17 +932,15 @@ namespace LOG8704.Editor
                     var soLeft = new SerializedObject(leftActionMgr);
                     soLeft.Update();
                     var moveP = soLeft.FindProperty("m_Move");
-                    if (moveP != null) moveP.objectReferenceValue = null;
-                    // Left controller turning is managed directly by SnapTurnProvider / ContinuousTurnProvider and TP1ComfortManager
-                    // Setting m_Turn and m_SnapTurn to null prevents ControllerInputActionManager from disabling them
+                    if (moveP != null) moveP.objectReferenceValue = leftMoveAction;
                     var turnP = soLeft.FindProperty("m_Turn");
                     if (turnP != null) turnP.objectReferenceValue = null;
                     var snapP = soLeft.FindProperty("m_SnapTurn");
                     if (snapP != null) snapP.objectReferenceValue = null;
                     var teleP = soLeft.FindProperty("m_TeleportMode");
-                    if (teleP != null) teleP.objectReferenceValue = null;
+                    if (teleP != null) teleP.objectReferenceValue = leftTeleportModeAction;
                     var teleCanP = soLeft.FindProperty("m_TeleportModeCancel");
-                    if (teleCanP != null) teleCanP.objectReferenceValue = null;
+                    if (teleCanP != null) teleCanP.objectReferenceValue = leftTeleportModeCancelAction;
                     var smoothMotP = soLeft.FindProperty("m_SmoothMotionEnabled");
                     if (smoothMotP != null) smoothMotP.boolValue = false;
                     var smoothTurnP = soLeft.FindProperty("m_SmoothTurnEnabled");
@@ -689,15 +958,15 @@ namespace LOG8704.Editor
                     var soRight = new SerializedObject(rightActionMgr);
                     soRight.Update();
                     var moveP = soRight.FindProperty("m_Move");
-                    if (moveP != null) moveP.objectReferenceValue = rightMoveAction;
+                    if (moveP != null) moveP.objectReferenceValue = null;
                     var turnP = soRight.FindProperty("m_Turn");
                     if (turnP != null) turnP.objectReferenceValue = null;
                     var snapP = soRight.FindProperty("m_SnapTurn");
                     if (snapP != null) snapP.objectReferenceValue = null;
                     var teleP = soRight.FindProperty("m_TeleportMode");
-                    if (teleP != null) teleP.objectReferenceValue = rightTeleportModeAction;
+                    if (teleP != null) teleP.objectReferenceValue = null;
                     var teleCanP = soRight.FindProperty("m_TeleportModeCancel");
-                    if (teleCanP != null) teleCanP.objectReferenceValue = rightTeleportModeCancelAction;
+                    if (teleCanP != null) teleCanP.objectReferenceValue = null;
                     var smoothMotP = soRight.FindProperty("m_SmoothMotionEnabled");
                     if (smoothMotP != null) smoothMotP.boolValue = false;
                     var smoothTurnP = soRight.FindProperty("m_SmoothTurnEnabled");
@@ -713,21 +982,37 @@ namespace LOG8704.Editor
             {
                 var soComfort = new SerializedObject(comfortManager);
                 soComfort.Update();
+                var teleRefProp = soComfort.FindProperty("m_TeleportProvider");
+                if (teleRefProp != null) teleRefProp.objectReferenceValue = rigInstance.GetComponentInChildren<ComfortTeleportationProvider>(true);
+                var dashRefProp = soComfort.FindProperty("m_DashProvider");
+                if (dashRefProp != null) dashRefProp.objectReferenceValue = rigInstance.GetComponentInChildren<DashProvider>(true);
                 var moveRefProp = soComfort.FindProperty("m_ContinuousMoveProvider");
                 if (moveRefProp != null) moveRefProp.objectReferenceValue = moveProvider;
                 var snapRefProp = soComfort.FindProperty("m_SnapTurnProvider");
                 if (snapRefProp != null) snapRefProp.objectReferenceValue = snapTurn;
                 var contTurnRefProp = soComfort.FindProperty("m_ContinuousTurnProvider");
                 if (contTurnRefProp != null) contTurnRefProp.objectReferenceValue = continuousTurn;
-                var snapActProp = soComfort.FindProperty("m_LeftSnapTurnAction");
-                if (snapActProp != null) snapActProp.objectReferenceValue = leftSnapTurnAction;
-                var contActProp = soComfort.FindProperty("m_LeftTurnAction");
-                if (contActProp != null) contActProp.objectReferenceValue = leftTurnAction;
+                var vigRefProp = soComfort.FindProperty("m_VignetteController");
+                if (vigRefProp != null) vigRefProp.objectReferenceValue = rigInstance.GetComponentInChildren<TunnelingVignetteController>(true);
+                var snapActProp = soComfort.FindProperty("m_RightSnapTurnAction");
+                if (snapActProp != null) snapActProp.objectReferenceValue = rightSnapTurnAction;
+                var contActProp = soComfort.FindProperty("m_RightTurnAction");
+                if (contActProp != null) contActProp.objectReferenceValue = rightTurnAction;
                 soComfort.ApplyModifiedPropertiesWithoutUndo();
                 EditorUtility.SetDirty(comfortManager);
             }
 
-            Debug.Log("[TP1ArenaBuilder] Joystick assignments configured: Left = View Only (Snap/Smooth Turn), Right = Locomotion Only (Move/Teleport/Dash).");
+            // 6. Connect CharacterControllerDriver locomotion provider
+#pragma warning disable CS0618
+            var ccDriver = rigInstance.GetComponent<CharacterControllerDriver>();
+            if (ccDriver != null)
+            {
+                ccDriver.locomotionProvider = moveProvider;
+                EditorUtility.SetDirty(ccDriver);
+            }
+#pragma warning restore CS0618
+
+            Debug.Log("[TP1ArenaBuilder] Joystick assignments configured: Left = Locomotion Only (Move/Teleport/Dash), Right = View Only (Snap/Smooth Turn).");
         }
 
         private static void SetupEventSystem()

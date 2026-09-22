@@ -13,8 +13,8 @@
 
 ## Locomotion & Controls Mapping Rules
 1. **Joystick Isolation**:
-   - **Left Joystick**: Exclusively for **View / Rotation** (`SnapTurnProvider` default 45° or `ContinuousTurnProvider`). No translation.
-   - **Right Joystick**: Exclusively for **Locomotion** (`ContinuousMoveProvider` in Smooth mode, `TeleportationProvider` / `DashProvider` in Teleport/Dash modes). No rotation.
+   - **Left Joystick**: Exclusively for **Locomotion** (`ContinuousMoveProvider` in Smooth mode, `TeleportationProvider` / `DashProvider` in Teleport/Dash modes). No rotation.
+   - **Right Joystick**: Exclusively for **View / Rotation** (`SnapTurnProvider` default 45° or `ContinuousTurnProvider`). No translation.
 2. **Comfort Systems**:
    - Field-of-view reduction via `TunnelingVignetteController`.
    - Rapid blink blackout transition via `ScreenFadeCanvas`.
@@ -26,3 +26,8 @@
 - **Code & Setup Verification**:
   - Verify C# compilation cleanly with 0 errors via `read_console`.
   - Maintain reproducible scene construction via `TP1ArenaBuilder.cs`.
+
+## MCP Tool Integration & Capabilities
+- **`unityMCP`**: Available for direct Unity Editor inspection and automation (`read_console` for compilation checks, `manage_scene`, `find_gameobjects`, `manage_gameobject`, `manage_components`, `execute_menu_item`, `manage_asset`, `refresh_unity`).
+- **`metavr`**: Available for Meta Horizon OS / Meta Quest device operations and references (`metavr_device`, `get_device_logcat`, `take_screenshot`, `meta_docs_search`, `metavr_unity_setup`, Perfetto tracing).
+

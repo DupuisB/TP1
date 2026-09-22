@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Comfort;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Movement;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Turning;
@@ -45,8 +46,10 @@ namespace LOG8704.Locomotion
         [SerializeField] private TunnelingVignetteController m_VignetteController;
 
         [Header("Turn Input Action References")]
-        [SerializeField] private InputActionReference m_LeftSnapTurnAction;
-        [SerializeField] private InputActionReference m_LeftTurnAction;
+        [FormerlySerializedAs("m_LeftSnapTurnAction")]
+        [SerializeField] private InputActionReference m_RightSnapTurnAction;
+        [FormerlySerializedAs("m_LeftTurnAction")]
+        [SerializeField] private InputActionReference m_RightTurnAction;
 
         [Header("Initial Configuration")]
         [SerializeField] private LocomotionMode m_InitialLocomotionMode = LocomotionMode.Teleport;
@@ -165,17 +168,236 @@ namespace LOG8704.Locomotion
             // Setup Vignette providers
             SetupVignetteProviders();
 
-            // Link teleport areas to ComfortTeleportationProvider
-            var teleportAreas = FindObjectsByType<TeleportationArea>(FindObjectsSortMode.None);
-            foreach (var area in teleportAreas)
+            // Configure teleport line visuals to Orange for impossible/blocked teleport
+            ConfigureTeleportRayVisuals();
+
+            // Ensure all walkable & elevated surfaces (ground, platforms, ramps, stairs) are teleportable
+            EnsureAllSurfacesTeleportable();
+        }
+
+        /// <summary>
+        /// Configures teleport ray visuals so that impossible/blocked/invalid teleport destinations
+        /// display an orange line instead of yellow or red.
+        /// </summary>
+        public void ConfigureTeleportRayVisuals()
+        {
+            var lineVisuals = FindObjectsByType<UnityEngine.XR.Interaction.Toolkit.Interactors.Visuals.XRInteractorLineVisual>(FindObjectsSortMode.None);
+            var orange = new Color(1.0f, 0.5f, 0.0f, 1.0f);
+            var orangeSemi = new Color(1.0f, 0.5f, 0.0f, 0.65f);
+
+            foreach (var lv in lineVisuals)
             {
+                if (lv.name.Contains("Teleport") || (lv.transform.parent != null && lv.transform.parent.name.Contains("Teleport")))
+                {
+                    // Blocked gradient: Solid Orange
+                    var blockedGrad = new Gradient();
+                    blockedGrad.SetKeys(
+                        new GradientColorKey[] { new GradientColorKey(orange, 0f), new GradientColorKey(orange, 1f) },
+                        new GradientAlphaKey[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(1f, 1f) }
+                    );
+                    lv.blockedColorGradient = blockedGrad;
+
+                    // Invalid gradient: Semi-transparent Orange
+                    var invalidGrad = new Gradient();
+                    invalidGrad.SetKeys(
+                        new GradientColorKey[] { new GradientColorKey(orange, 0f), new GradientColorKey(orange, 1f) },
+                        new GradientAlphaKey[] { new GradientAlphaKey(0.65f, 0f), new GradientAlphaKey(0.65f, 1f) }
+                    );
+                    lv.invalidColorGradient = invalidGrad;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Ensures walkable ground, floors, platforms, ramps, stairs, modular blocks, and crates
+        /// have active TeleportationArea components, while red surfaces (red.mat) and vertical walls/props are rejected.
+        /// </summary>
+        public void EnsureAllSurfacesTeleportable()
+        {
+            var colliders = FindObjectsByType<Collider>(FindObjectsSortMode.None);
+            int count = 0;
+            foreach (var col in colliders)
+            {
+                if (col.isTrigger)
+                    continue;
+
+                // 1. Red surfaces and marked blocked objects must NEVER be teleportable
+                if (IsRedOrBlocked(col))
+                {
+                    var existingArea = col.GetComponent<TeleportationArea>();
+                    if (existingArea != null)
+                    {
+                        if (Application.isPlaying) Destroy(existingArea);
+                        else DestroyImmediate(existingArea);
+                    }
+                    continue;
+                }
+
+                // 2. Only surfaces where teleportation makes sense receive TeleportationArea
+                if (IsWalkableSurface(col))
+                {
+                    var area = col.GetComponent<TeleportationArea>();
+                    if (area == null)
+                    {
+                        area = col.gameObject.AddComponent<TeleportationArea>();
+                    }
+                    area.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
+                    area.matchOrientation = MatchOrientation.WorldSpaceUp;
+                    area.interactionLayers = unchecked((int)2147483648) | 1 | UnityEngine.XR.Interaction.Toolkit.InteractionLayerMask.GetMask("Teleport");
+                    area.filterSelectionByHitNormal = true;
+                    area.upNormalToleranceDegrees = 60f; // Accepts up to 60° slopes/ramps (including 45° ramps and stairs), rejects vertical walls/sides (90°)
+                    if (m_TeleportProvider != null)
+                        area.teleportationProvider = m_TeleportProvider;
+                    count++;
+                }
+                else
+                {
+                    // Non-walkable objects (walls, columns, foliage, props) must not have TeleportationArea
+                    var existingArea = col.GetComponent<TeleportationArea>();
+                    if (existingArea != null)
+                    {
+                        if (Application.isPlaying) Destroy(existingArea);
+                        else DestroyImmediate(existingArea);
+                    }
+                }
+            }
+
+            // Also cleanup any stray or misconfigured TeleportationArea components in the scene
+            var allAreas = FindObjectsByType<TeleportationArea>(FindObjectsSortMode.None);
+            foreach (var area in allAreas)
+            {
+                var col = area.GetComponent<Collider>();
+                if (col == null || IsRedOrBlocked(col) || !IsWalkableSurface(col))
+                {
+                    if (Application.isPlaying) Destroy(area);
+                    else DestroyImmediate(area);
+                    continue;
+                }
+
                 area.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
                 area.matchOrientation = MatchOrientation.WorldSpaceUp;
                 area.interactionLayers = unchecked((int)2147483648) | 1 | UnityEngine.XR.Interaction.Toolkit.InteractionLayerMask.GetMask("Teleport");
-
+                area.filterSelectionByHitNormal = true;
+                area.upNormalToleranceDegrees = 60f;
                 if (m_TeleportProvider != null)
                     area.teleportationProvider = m_TeleportProvider;
             }
+
+            Debug.Log($"[TP1ComfortManager] Configured {count} teleportable surfaces (ground, floors, platforms, blocks, crates, ramps). Red surfaces strictly excluded.");
+        }
+
+        /// <summary>
+        /// Returns true if the collider represents a walkable/standable surface where teleportation makes sense
+        /// (ground, terrain, floors, platforms, stairs, ramps, modular blocks, crates, roofs, decks),
+        /// excluding vertical obstacles (walls, fences, columns, doors, ladders) and small props/foliage.
+        /// </summary>
+        public static bool IsWalkableSurface(Collider col)
+        {
+            if (col == null || col.isTrigger) return false;
+
+            string n = col.gameObject.name.ToLowerInvariant();
+            string p = col.transform.parent != null ? col.transform.parent.name.ToLowerInvariant() : "";
+            string fullName = n + " " + p;
+
+            // Exclude vertical structures, frames, ladders, barriers
+            if (fullName.Contains("wall") || fullName.Contains("fence") || fullName.Contains("door") || 
+                fullName.Contains("window") || fullName.Contains("boundary") || fullName.Contains("column") ||
+                fullName.Contains("pillar") || fullName.Contains("frame") || fullName.Contains("ladder"))
+            {
+                return false;
+            }
+
+            // Exclude small props, weapons, coins, cones, targets, arrows, foliage, vehicles, rig, and safety catch floors
+            if (fullName.Contains("tree") || fullName.Contains("sword") || fullName.Contains("coin") || fullName.Contains("cone") ||
+                fullName.Contains("arrow") || fullName.Contains("target") || fullName.Contains("controller") || fullName.Contains("hand") ||
+                fullName.Contains("shield") || fullName.Contains("watergun") || fullName.Contains("waterpistol") || fullName.Contains("refill") ||
+                fullName.Contains("ring") || fullName.Contains("question") || fullName.Contains("car") || fullName.Contains("plane_stunt") ||
+                fullName.Contains("wheel") || fullName.Contains("sphere") || fullName.Contains("tube") || fullName.Contains("xr origin") ||
+                fullName.Contains("camera") || fullName.Contains("canvas") || fullName.Contains("pedestal") || fullName.Contains("socket") ||
+                fullName.Contains("safety"))
+            {
+                return false;
+            }
+
+            // Match walkable/standable geometry (Safety_Teleport_Floor excluded to prevent teleporting into the void)
+            return fullName.Contains("ground") || fullName.Contains("floor") || fullName.Contains("road") || fullName.Contains("path") || 
+                   fullName.Contains("dirt") || fullName.Contains("grass") || fullName.Contains("concrete") || 
+                   fullName.Contains("platform") || fullName.Contains("ramp") || fullName.Contains("stairs") || fullName.Contains("roof") || 
+                   fullName.Contains("bench") || fullName.Contains("table") || fullName.Contains("step") || fullName.Contains("deck") || 
+                   fullName.Contains("rock") || fullName.Contains("mountain") || fullName.Contains("bld") || fullName.Contains("house") ||
+                   fullName.Contains("block") || fullName.Contains("crate") || fullName.Contains("box");
+        }
+
+        /// <summary>
+        /// Returns true if a collider belongs to an object that rejects teleportation
+        /// (e.g. red colored objects using red.mat, NoTeleportZone component, or marked obstacles).
+        /// </summary>
+        public static bool IsRedOrBlocked(Collider col)
+        {
+            if (col == null) return false;
+            if (col.GetComponent<NoTeleportZone>() != null || col.GetComponentInParent<NoTeleportZone>() != null)
+                return true;
+
+            string n = col.gameObject.name.ToLowerInvariant();
+            string p = col.transform.parent != null ? col.transform.parent.name.ToLowerInvariant() : "";
+            string fullName = n + " " + p;
+
+            // Explicitly blocked by name (obstacles, marked no-teleport zones, or explicitly named red)
+            if (fullName.Contains("obstacle") || fullName.Contains("red") || fullName.Contains("no_teleport") ||
+                fullName.Contains("noteleport") || fullName.Contains("m_arenaobstacle"))
+            {
+                return true;
+            }
+
+            // Inspect all renderers attached to the collider, its children, or its parent
+            var renderers = col.GetComponentsInChildren<Renderer>();
+            var parentRenderer = col.GetComponentInParent<Renderer>();
+
+            bool CheckRenderer(Renderer r)
+            {
+                if (r == null || r.sharedMaterials == null) return false;
+                foreach (var mat in r.sharedMaterials)
+                {
+                    if (mat == null) continue;
+                    string matName = mat.name.ToLowerInvariant();
+                    // Matches "red", "red.mat", "polygonstarter_02" (legacy red name), "arenaobstacle"
+                    if (matName.Contains("red") || matName.Contains("polygonstarter_02") || matName.Contains("arenaobstacle"))
+                        return true;
+
+                    // Check albedo texture name if available
+                    if (mat.HasProperty("_Albedo_Map"))
+                    {
+                        var tex = mat.GetTexture("_Albedo_Map");
+                        if (tex != null && (tex.name.ToLowerInvariant().Contains("red") || tex.name.ToLowerInvariant().Contains("polygonstarter_02")))
+                            return true;
+                    }
+                    if (mat.mainTexture != null)
+                    {
+                        if (mat.mainTexture.name.ToLowerInvariant().Contains("red") || mat.mainTexture.name.ToLowerInvariant().Contains("polygonstarter_02"))
+                            return true;
+                    }
+
+                    // Check color properties
+                    Color c = mat.HasProperty("_BaseColor") ? mat.GetColor("_BaseColor") : (mat.HasProperty("_Color") ? mat.GetColor("_Color") : Color.black);
+                    if (c.r > 0.6f && c.g < 0.35f && c.b < 0.35f && c.a > 0.1f)
+                        return true;
+                }
+                return false;
+            }
+
+            if (parentRenderer != null && CheckRenderer(parentRenderer))
+                return true;
+
+            if (renderers != null)
+            {
+                foreach (var r in renderers)
+                {
+                    if (CheckRenderer(r))
+                        return true;
+                }
+            }
+
+            return false;
         }
 
         private void SetupVignetteProviders()
@@ -292,9 +514,9 @@ namespace LOG8704.Locomotion
             var actionManagers = FindObjectsByType<ControllerInputActionManager>(FindObjectsSortMode.None);
             foreach (var mgr in actionManagers)
             {
-                // Only right controller manages locomotion (smooth move vs teleport)
-                // Left controller is strictly for view/turning and must keep smoothMotionEnabled false
-                if (mgr.name.Contains("Right") || (mgr.transform.parent != null && mgr.transform.parent.name.Contains("Right")))
+                // Left controller manages locomotion (smooth move vs teleport)
+                // Right controller is strictly for view/turning and must keep smoothMotionEnabled false
+                if (mgr.name.Contains("Left") || (mgr.transform.parent != null && mgr.transform.parent.name.Contains("Left")))
                 {
                     mgr.smoothMotionEnabled = (mode == LocomotionMode.SmoothMove);
                 }
@@ -382,13 +604,13 @@ namespace LOG8704.Locomotion
                 m_ContinuousTurnProvider.enabled = isSmooth;
 
             // Ensure Input Actions are enabled
-            if (!isSmooth && m_LeftSnapTurnAction != null && m_LeftSnapTurnAction.action != null && !m_LeftSnapTurnAction.action.enabled)
+            if (!isSmooth && m_RightSnapTurnAction != null && m_RightSnapTurnAction.action != null && !m_RightSnapTurnAction.action.enabled)
             {
-                m_LeftSnapTurnAction.action.Enable();
+                m_RightSnapTurnAction.action.Enable();
             }
-            if (isSmooth && m_LeftTurnAction != null && m_LeftTurnAction.action != null && !m_LeftTurnAction.action.enabled)
+            if (isSmooth && m_RightTurnAction != null && m_RightTurnAction.action != null && !m_RightTurnAction.action.enabled)
             {
-                m_LeftTurnAction.action.Enable();
+                m_RightTurnAction.action.Enable();
             }
 
             // Coordinate ControllerInputActionManagers
