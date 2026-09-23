@@ -64189,9 +64189,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LOG8704.Locomotion.DashProvider
   m_Mediator: {fileID: 6306301792915328}
   m_TransformationPriority: 0
-  m_DashDistance: 5
   m_DashDuration: 0.2
-  m_Cooldown: 0.5
+  m_Cooldown: 0.25
   m_DashCurve:
     serializedVersion: 2
     m_Curve:
@@ -64216,38 +64215,24 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_DirectionSource: 0
-  m_ForwardSource: {fileID: 0}
   m_ObstacleLayers:
     serializedVersion: 2
     m_Bits: 4294967295
   m_PlayerRadius: 0.3
-  m_SkinWidth: 0.1
+  m_PlayerHeight: 1.8
+  m_SkinWidth: 0.12
   m_VignetteController: {fileID: 2127409896}
   m_VignetteParameters:
-    m_ApertureSize: 0.5
+    m_ApertureSize: 0.38
     m_FeatheringEffect: 0.2
-    m_EaseInTime: 0.05
-    m_EaseOutTime: 0.15
+    m_EaseInTime: 0.03
+    m_EaseOutTime: 0.08
     m_EaseInTimeLock: 0
     m_EaseOutDelayTime: 0
     m_VignetteColor: {r: 0, g: 0, b: 0, a: 1}
     m_VignetteColorBlend: {r: 0, g: 0, b: 0, a: 1}
     m_ApertureVerticalPosition: 0
-  m_DashAction:
-    m_UseReference: 0
-    m_Action:
-      m_Name: 
-      m_Type: 0
-      m_ExpectedControlType: 
-      m_Id: 291f8a1e-ce02-4014-8445-5affa1c8592a
-      m_Processors: 
-      m_Interactions: 
-      m_SingletonActionBindings: []
-      m_Flags: 0
-      m_Priority: 0
-    m_Reference: {fileID: 0}
-  m_EnableKeyboardShortcut: 1
+  m_EnableHaptics: 1
 --- !u!4 &4388087503525137935
 Transform:
   m_ObjectHideFlags: 0
