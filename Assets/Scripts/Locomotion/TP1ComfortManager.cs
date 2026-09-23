@@ -58,7 +58,7 @@ namespace LOG8704.Locomotion
         [SerializeField] private TurnMode m_InitialTurnMode = TurnMode.Snap;
 
         [Header("Desktop Testing Shortcuts")]
-        [Tooltip("Enable keyboard shortcuts (1: Smooth, 2: Teleport, 3: Dash, 4: Blink, 5: Vignette, 6: Turn, Space: Dash, T: Teleport)")]
+        [Tooltip("Enable keyboard shortcuts (1: Smooth, 2: Teleport, 3: Dash, 4: Blink, 5: Vignette, 6: Turn, T: Teleport/Dash)")]
         [SerializeField] private bool m_EnableKeyboardShortcuts = true;
 
         // Current runtime states
@@ -516,11 +516,6 @@ namespace LOG8704.Locomotion
             else if (Keyboard.current.digit6Key.wasPressedThisFrame || Keyboard.current.numpad6Key.wasPressedThisFrame)
             {
                 ToggleTurnMode();
-            }
-            else if (Keyboard.current.spaceKey.wasPressedThisFrame)
-            {
-                if (m_DashProvider != null)
-                    m_DashProvider.TryStartDash();
             }
             else if (Keyboard.current.tKey.wasPressedThisFrame)
             {
