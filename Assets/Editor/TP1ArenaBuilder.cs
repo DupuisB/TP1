@@ -1288,8 +1288,8 @@ namespace LOG8704.Editor
         public static void UpdateBuildSettingsForDemoAndDebut()
         {
             var scenes = new List<EditorBuildSettingsScene>();
-            scenes.Add(new EditorBuildSettingsScene(SyntyScenePath, true));
             scenes.Add(new EditorBuildSettingsScene(DebutScenePath, true));
+            scenes.Add(new EditorBuildSettingsScene(SyntyScenePath, true));
 
             foreach (var s in EditorBuildSettings.scenes)
             {
@@ -1300,7 +1300,7 @@ namespace LOG8704.Editor
                 }
             }
             EditorBuildSettings.scenes = scenes.ToArray();
-            Debug.Log("[TP1ArenaBuilder] Configured EditorBuildSettings: Scene 0 = Demo (enabled), Scene 1 = Début (enabled).");
+            Debug.Log("[TP1ArenaBuilder] Configured EditorBuildSettings: Scene 0 = Début (enabled), Scene 1 = Demo (enabled).");
         }
 
         [MenuItem("LOG8704/Setup Début Scene for VR")]
@@ -1343,16 +1343,64 @@ namespace LOG8704.Editor
                     ray.maxRaycastDistance = 60f;
                     ray.endPointHeight = -50f;
                 }
+
+                // Ensure TP1ComfortManager references are wired
+                var comfortMgr = rigInstance.GetComponent<TP1ComfortManager>();
+                if (comfortMgr != null)
+                {
+                    var soMgr = new SerializedObject(comfortMgr);
+                    soMgr.Update();
+
+                    var tpProp = soMgr.FindProperty("m_TeleportProvider");
+                    if (tpProp != null && tpProp.objectReferenceValue == null)
+                        tpProp.objectReferenceValue = rigInstance.GetComponentInChildren<ComfortTeleportationProvider>(true);
+
+                    var dashProp = soMgr.FindProperty("m_DashProvider");
+                    if (dashProp != null && dashProp.objectReferenceValue == null)
+                        dashProp.objectReferenceValue = rigInstance.GetComponentInChildren<DashProvider>(true);
+
+                    var vigProp = soMgr.FindProperty("m_VignetteController");
+                    if (vigProp != null && vigProp.objectReferenceValue == null)
+                        vigProp.objectReferenceValue = rigInstance.GetComponentInChildren<TunnelingVignetteController>(true);
+
+                    var moveProp = soMgr.FindProperty("m_ContinuousMoveProvider");
+                    if (moveProp != null && moveProp.objectReferenceValue == null)
+                        moveProp.objectReferenceValue = rigInstance.GetComponentInChildren<ContinuousMoveProvider>(true);
+
+                    var snapProp = soMgr.FindProperty("m_SnapTurnProvider");
+                    if (snapProp != null && snapProp.objectReferenceValue == null)
+                        snapProp.objectReferenceValue = rigInstance.GetComponentInChildren<SnapTurnProvider>(true);
+
+                    var turnProp = soMgr.FindProperty("m_ContinuousTurnProvider");
+                    if (turnProp != null && turnProp.objectReferenceValue == null)
+                        turnProp.objectReferenceValue = rigInstance.GetComponentInChildren<ContinuousTurnProvider>(true);
+
+                    soMgr.ApplyModifiedProperties();
+                    EditorUtility.SetDirty(comfortMgr);
+                }
             }
 
-            // Remove any old portal instances
-            var oldDemoPortal = GameObject.Find("Portal_To_Demo");
-            if (oldDemoPortal != null) UnityEngine.Object.DestroyImmediate(oldDemoPortal);
-            var oldTestArenaPortal = GameObject.Find("Portal_To_TestArena");
-            if (oldTestArenaPortal != null) UnityEngine.Object.DestroyImmediate(oldTestArenaPortal);
+            // Remove any old portal, tutorial boards & target zones (active or inactive)
+            var toDestroy = new List<GameObject>();
+            foreach (var rootGo in scene.GetRootGameObjects())
+            {
+                if (rootGo.name == "Portal_To_Demo" ||
+                    rootGo.name == "Portal_To_TestArena" ||
+                    rootGo.name == "Tutorial_Board_Station" ||
+                    rootGo.name == "Tutorial_Board" ||
+                    rootGo.name == "Tutorial_Target_Zone" ||
+                    rootGo.name == "TutorialTeleportZone")
+                {
+                    toDestroy.Add(rootGo);
+                }
+            }
+            foreach (var d in toDestroy)
+            {
+                UnityEngine.Object.DestroyImmediate(d);
+            }
 
             // Setup In-World Portal to Demo scene near spawn (-7.5, 2.0, 90)
-            CreateScenePortal(
+            var portalGo = CreateScenePortal(
                 "Portal_To_Demo",
                 "Demo",
                 new Vector3(-5.5f, 0.05f, 87.5f),
@@ -1360,15 +1408,81 @@ namespace LOG8704.Editor
                 new Color(0.95f, 0.55f, 0.1f, 1f),
                 "TO DEMO SCENE"
             );
+            var portalComponent = portalGo.GetComponent<SceneTeleportPortal>();
+            var portalBillboardTmp = portalGo.transform.Find("Portal_Status_Billboard")?.GetComponent<TextMeshPro>();
+
+            // Create Tutorial Display Board directly facing player spawn (-7.5, 2.0, 90)
+            var tutorialController = TutorialFlowController.CreateTutorialBoard(
+                null,
+                new Vector3(-7.5f, 1.4f, 86.8f),
+                Quaternion.Euler(0f, 0f, 0f)
+            );
+
+            // Create Teleport Target Zone pad down the room
+            var targetZoneGo = CreateTutorialTargetZone(new Vector3(-7.5f, 0.05f, 81.5f), tutorialController);
+
+            // Wire TutorialFlowController scene references
+            tutorialController.teleportTargetZone = targetZoneGo;
+            tutorialController.exitPortal = portalComponent;
+            tutorialController.portalStatusBillboard = portalBillboardTmp;
+            tutorialController.GatePortal(true);
+            tutorialController.SetStep(TutorialFlowController.Step.OpenWristMenu);
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, DebutScenePath);
-            Debug.Log($"[TP1ArenaBuilder] Début scene successfully saved with portal to Demo.");
+            Debug.Log($"[TP1ArenaBuilder] Début scene successfully saved with 5-step tutorial board, target pad, and gated portal to Demo.");
 
             UpdateBuildSettingsForDemoAndDebut();
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+        }
+
+        private static GameObject CreateTutorialTargetZone(Vector3 position, TutorialFlowController controller)
+        {
+            var root = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            root.name = "Tutorial_Target_Zone";
+            root.transform.position = position;
+            root.transform.localScale = new Vector3(2.6f, 0.04f, 2.6f);
+
+            var defaultCapsule = root.GetComponent<Collider>();
+            if (defaultCapsule != null) UnityEngine.Object.DestroyImmediate(defaultCapsule);
+
+            var boxCol = root.AddComponent<BoxCollider>();
+            boxCol.size = new Vector3(2.6f, 0.1f, 2.6f);
+            boxCol.center = Vector3.zero;
+
+            var padMat = GetOrCreateMaterial("Assets/Materials/M_TutorialTargetPad.mat", new Color(0.1f, 0.7f, 1.0f, 0.9f), 0.5f);
+            if (padMat.HasProperty("_EmissionColor"))
+            {
+                padMat.EnableKeyword("_EMISSION");
+                padMat.SetColor("_EmissionColor", new Color(0.1f, 0.8f, 1.2f) * 1.5f);
+                EditorUtility.SetDirty(padMat);
+            }
+            root.GetComponent<MeshRenderer>().sharedMaterial = padMat;
+
+            var teleportArea = root.AddComponent<TeleportationArea>();
+            teleportArea.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
+            teleportArea.matchOrientation = MatchOrientation.WorldSpaceUp;
+            teleportArea.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+            teleportArea.filterSelectionByHitNormal = true;
+            teleportArea.upNormalToleranceDegrees = 75f;
+
+            var trigger = root.AddComponent<TutorialTeleportZoneTrigger>();
+            trigger.SetController(controller);
+
+            // Floating beacon label above pad
+            var labelGo = new GameObject("Zone_Label");
+            labelGo.transform.SetParent(root.transform, false);
+            labelGo.transform.localPosition = new Vector3(0f, 15.0f, 0f); // 15 * 0.04 = 0.6m above pad
+            labelGo.transform.localScale = new Vector3(0.38f, 25.0f, 0.38f);
+            var labelTmp = labelGo.AddComponent<TextMeshPro>();
+            labelTmp.text = "<color=#38ef7d><b>ZONE CIBLE</b></color>\n<size=70%>TÉLÉPORTEZ-VOUS ICI</size>";
+            labelTmp.fontSize = 3.0f;
+            labelTmp.alignment = TextAlignmentOptions.Center;
+            labelTmp.rectTransform.sizeDelta = new Vector2(4f, 1.5f);
+
+            return root;
         }
 
         private static GameObject CreateScenePortal(
@@ -1464,7 +1578,18 @@ namespace LOG8704.Editor
             tmp.color = curtainColor;
             tmp.rectTransform.sizeDelta = new Vector2(4f, 1f);
 
-            // 7. SceneTeleportPortal component
+            // 7. Floating Status Billboard right above lintel / sign
+            var statusBillboardGo = new GameObject("Portal_Status_Billboard");
+            statusBillboardGo.transform.SetParent(portalRoot.transform, false);
+            statusBillboardGo.transform.localPosition = new Vector3(0f, 2.95f, 0f);
+            var statusTmp = statusBillboardGo.AddComponent<TextMeshPro>();
+            statusTmp.text = "<color=#f87171><b>PORTAIL VERROUILLÉ</b></color>\n<size=70%>Complétez le tutoriel pour continuer</size>";
+            statusTmp.fontSize = 2.4f;
+            statusTmp.alignment = TextAlignmentOptions.Center;
+            statusTmp.color = Color.white;
+            statusTmp.rectTransform.sizeDelta = new Vector2(5f, 1.2f);
+
+            // 8. SceneTeleportPortal component
             var portal = portalRoot.AddComponent<SceneTeleportPortal>();
             var so = new SerializedObject(portal);
             so.Update();

@@ -154,6 +154,8 @@ namespace LOG8704.UI
         private bool m_DebugDetachApplied;
         private static Sprite s_RoundedPanelSprite;
 
+        public bool isMenuVisible => m_CanvasGroup != null && m_CanvasGroup.alpha > 0.4f;
+
         public void SetSprites(Sprite walk, Sprite tele, Sprite dash, Sprite blink, Sprite vig, Sprite turn)
         {
             m_WalkSprite = walk;
@@ -438,7 +440,7 @@ namespace LOG8704.UI
             {
                 text.alignment = alignment;
                 text.fontSize = fontSize;
-                text.enableWordWrapping = false;
+                text.textWrappingMode = TextWrappingModes.NoWrap;
                 text.overflowMode = TextOverflowModes.Overflow;
             }
         }
