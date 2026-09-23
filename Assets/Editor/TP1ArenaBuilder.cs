@@ -10,7 +10,9 @@ using UnityEngine.InputSystem.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion;
+using UnityEngine.XR.Interaction.Toolkit.Locomotion.Climbing;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Comfort;
+using UnityEngine.XR.Interaction.Toolkit.Locomotion.Jump;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Movement;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Turning;
@@ -31,6 +33,7 @@ namespace LOG8704.Editor
         public const string TargetScenePath = "Assets/Scenes/TP1_TestArena.unity";
         public const string SyntyScenePath = "Assets/Synty/PolygonStarter/Scenes/Demo.unity";
         private const string MaterialsDir = "Assets/Materials";
+        private const string SyntyLadderClimbSetupPreference = "TP1_SyntyLadderClimbSetup_V1";
         private const string XrOriginPrefabPath = "Assets/Samples/XR Interaction Toolkit/3.5.1/Starter Assets/Prefabs/XR Origin (XR Rig).prefab";
         private const string TunnelingVignettePrefabPath = "Assets/Samples/XR Interaction Toolkit/3.5.1/Starter Assets/TunnelingVignette/TunnelingVignette.prefab";
 
@@ -60,7 +63,94 @@ namespace LOG8704.Editor
                     WaterPistolSetupUtility.CreateOrUpdateWaterPistolPrefab();
                     SetupSyntyDemoScene();
                 }
+
+                ConfigureSavedSyntyDemoLaddersOnce();
             };
+        }
+
+        private static void ConfigureSavedSyntyDemoLaddersOnce()
+        {
+            if (EditorApplication.isPlaying || EditorPrefs.GetBool(SyntyLadderClimbSetupPreference, false))
+                return;
+
+            Scene scene = default;
+            bool openedForSetup = false;
+            for (int i = 0; i < SceneManager.sceneCount; i++)
+            {
+                var loadedScene = SceneManager.GetSceneAt(i);
+                if (loadedScene.path == SyntyScenePath)
+                {
+                    scene = loadedScene;
+                    break;
+                }
+            }
+
+            if (!scene.IsValid())
+            {
+                scene = EditorSceneManager.OpenScene(SyntyScenePath, OpenSceneMode.Additive);
+                openedForSetup = true;
+            }
+
+            try
+            {
+                // Avoid folding unrelated unsaved edits into this one-time scene migration.
+                if (scene.isDirty)
+                {
+                    Debug.LogWarning("[TP1ArenaBuilder] Synty Demo has unsaved changes; ladder setup will run when the scene is rebuilt.");
+                    return;
+                }
+
+                var rig = FindComponentInScene<XROrigin>(scene);
+                var mediator = FindComponentInScene<LocomotionMediator>(scene);
+                if (rig == null || mediator == null)
+                    return;
+
+                var climbProvider = FindComponentInScene<ClimbProvider>(scene);
+                if (climbProvider == null)
+                {
+                    var locomotion = rig.transform.Find("Locomotion");
+                    climbProvider = (locomotion != null ? locomotion.gameObject : rig.gameObject).AddComponent<ClimbProvider>();
+                }
+                climbProvider.mediator = mediator;
+
+                EnsureProviderInList(climbProvider.providersToDisable, FindComponentInScene<ContinuousMoveProvider>(scene));
+                EnsureProviderInList(climbProvider.providersToDisable, FindComponentInScene<DashProvider>(scene));
+                EnsureProviderInList(climbProvider.providersToDisable, FindComponentInScene<ComfortTeleportationProvider>(scene));
+                ConfigureLadderClimbInteractables(scene, climbProvider);
+
+                var comfortManager = FindComponentInScene<TP1ComfortManager>(scene);
+                if (comfortManager != null)
+                {
+                    var managerSerialized = new SerializedObject(comfortManager);
+                    managerSerialized.Update();
+                    SetObjectReference(managerSerialized, "m_ClimbProvider", climbProvider);
+                    SetObjectReference(managerSerialized, "m_JumpProvider", FindComponentInScene<JumpProvider>(scene));
+                    SetObjectReference(managerSerialized, "m_VignetteController", FindComponentInScene<TunnelingVignetteController>(scene));
+                    managerSerialized.ApplyModifiedPropertiesWithoutUndo();
+                    EditorUtility.SetDirty(comfortManager);
+                }
+
+                EditorSceneManager.MarkSceneDirty(scene);
+                if (EditorSceneManager.SaveScene(scene))
+                    EditorPrefs.SetBool(SyntyLadderClimbSetupPreference, true);
+            }
+            finally
+            {
+                if (openedForSetup)
+                    EditorSceneManager.CloseScene(scene, true);
+            }
+        }
+
+        private static T FindComponentInScene<T>(Scene scene) where T : Component
+        {
+            foreach (var root in scene.GetRootGameObjects())
+            {
+                var component = root.GetComponentInChildren<T>(true);
+                if (component != null)
+                    return component;
+            }
+
+            return null;
         }
 
         [MenuItem("LOG8704/Build TP1 Test Arena Scene")]
@@ -787,6 +877,16 @@ namespace LOG8704.Editor
             comfortTeleport.dashProvider = dashProvider;
             comfortTeleport.screenFade = rigInstance.GetComponentInChildren<ScreenFadeCanvas>(true);
 
+            // Configure the XRI climb and jump providers already present on the Starter Assets rig.
+            var climbProvider = locomotionHost.GetComponentInChildren<ClimbProvider>(true);
+            if (climbProvider == null)
+                climbProvider = locomotionHost.AddComponent<ClimbProvider>();
+            climbProvider.mediator = mediator;
+
+            var jumpProvider = locomotionHost.GetComponentInChildren<JumpProvider>(true);
+            if (jumpProvider != null)
+                jumpProvider.mediator = mediator;
+
             // Connect scene's floor and platform TeleportationAreas to this ComfortTeleportationProvider
             var teleportAreas = UnityEngine.Object.FindObjectsByType<TeleportationArea>(FindObjectsSortMode.None);
             foreach (var area in teleportAreas)
@@ -880,8 +980,110 @@ namespace LOG8704.Editor
             // Configure Joystick Assignments: Left Stick = Locomotion Only, Right Stick = View Only
             ConfigureJoystickAssignments(rigInstance);
 
+            // Climbing should temporarily suspend other translation modes while preserving right-stick turning.
+            moveProvider = locomotionHost.GetComponentInChildren<ContinuousMoveProvider>(true);
+            EnsureProviderInList(climbProvider.providersToDisable, moveProvider);
+            EnsureProviderInList(climbProvider.providersToDisable, dashProvider);
+            EnsureProviderInList(climbProvider.providersToDisable, comfortTeleport);
+
+            ConfigureLadderClimbInteractables(scene, climbProvider);
+
+            // Persist provider references so the comfort manager can configure vignette behavior on startup.
+            var managerSerialized = new SerializedObject(comfortManager);
+            managerSerialized.Update();
+            SetObjectReference(managerSerialized, "m_TeleportProvider", comfortTeleport);
+            SetObjectReference(managerSerialized, "m_DashProvider", dashProvider);
+            SetObjectReference(managerSerialized, "m_ContinuousMoveProvider", moveProvider);
+            SetObjectReference(managerSerialized, "m_SnapTurnProvider", locomotionHost.GetComponentInChildren<SnapTurnProvider>(true));
+            SetObjectReference(managerSerialized, "m_ContinuousTurnProvider", locomotionHost.GetComponentInChildren<ContinuousTurnProvider>(true));
+            SetObjectReference(managerSerialized, "m_ClimbProvider", climbProvider);
+            SetObjectReference(managerSerialized, "m_JumpProvider", jumpProvider);
+            SetObjectReference(managerSerialized, "m_VignetteController", rigInstance.GetComponentInChildren<TunnelingVignetteController>(true));
+            managerSerialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(comfortManager);
+
             Debug.Log("[TP1ArenaBuilder] XR Origin Rig configured with CharacterController, ComfortTeleportation, Dash, Vignette, Forearm Wrist UI, and Joystick Mappings.");
             return rigInstance;
+        }
+
+        private static void EnsureProviderInList(List<LocomotionProvider> providers, LocomotionProvider provider)
+        {
+            if (providers != null && provider != null && !providers.Contains(provider))
+                providers.Add(provider);
+        }
+
+        private static void SetObjectReference(SerializedObject serializedObject, string propertyPath, UnityEngine.Object value)
+        {
+            var property = serializedObject.FindProperty(propertyPath);
+            if (property != null)
+                property.objectReferenceValue = value;
+        }
+
+        private static void ConfigureLadderClimbInteractables(Scene scene, ClimbProvider climbProvider)
+        {
+            if (climbProvider == null)
+                return;
+
+            int configuredCount = 0;
+            var transforms = UnityEngine.Object.FindObjectsByType<Transform>(FindObjectsSortMode.None);
+            foreach (var ladderTransform in transforms)
+            {
+                if (ladderTransform.gameObject.scene != scene || !ladderTransform.name.Contains("ladder", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                bool nestedUnderLadder = false;
+                for (var parent = ladderTransform.parent; parent != null; parent = parent.parent)
+                {
+                    if (parent.name.Contains("ladder", StringComparison.OrdinalIgnoreCase))
+                    {
+                        nestedUnderLadder = true;
+                        break;
+                    }
+                }
+
+                if (nestedUnderLadder)
+                    continue;
+
+                var ladder = ladderTransform.gameObject;
+                var collider = ladder.GetComponent<Collider>() ?? ladder.GetComponentInChildren<Collider>(true);
+                if (collider == null)
+                {
+                    Debug.LogWarning($"[TP1ArenaBuilder] Skipping ladder without a collider: {ladder.name}", ladder);
+                    continue;
+                }
+
+                // A kinematic body satisfies ClimbInteractable without allowing the ladder to move or fall.
+                ladder.isStatic = false;
+                var body = ladder.GetComponent<Rigidbody>();
+                if (body == null)
+                    body = ladder.AddComponent<Rigidbody>();
+                body.isKinematic = true;
+                body.useGravity = false;
+                body.constraints = RigidbodyConstraints.FreezeAll;
+
+                var climbInteractable = ladder.GetComponent<ClimbInteractable>();
+                if (climbInteractable == null)
+                    climbInteractable = ladder.AddComponent<ClimbInteractable>();
+
+                climbInteractable.climbProvider = climbProvider;
+                climbInteractable.climbTransform = ladder.transform;
+                climbInteractable.filterInteractionByDistance = true;
+                climbInteractable.maxInteractionDistance = 0.75f;
+                climbInteractable.selectMode = InteractableSelectMode.Multiple;
+                climbInteractable.enabled = true;
+                climbInteractable.climbSettingsOverride = new ClimbSettingsDatumProperty(new ClimbSettings
+                {
+                    allowFreeXMovement = false,
+                    allowFreeYMovement = true,
+                    allowFreeZMovement = false
+                });
+
+                EditorUtility.SetDirty(ladder);
+                EditorUtility.SetDirty(climbInteractable);
+                configuredCount++;
+            }
+
+            Debug.Log($"[TP1ArenaBuilder] Configured {configuredCount} ladder(s) with vertical XRI climbing.");
         }
 
         private static InputActionReference FindActionReference(string mapName, string actionName)

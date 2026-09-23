@@ -7,6 +7,8 @@ using UnityEngine.XR.Interaction.Toolkit.Locomotion.Comfort;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Movement;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Turning;
 using UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation;
+using UnityEngine.XR.Interaction.Toolkit.Locomotion.Climbing;
+using UnityEngine.XR.Interaction.Toolkit.Locomotion.Jump;
 using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
 
 namespace LOG8704.Locomotion
@@ -43,6 +45,8 @@ namespace LOG8704.Locomotion
         [SerializeField] private ContinuousMoveProvider m_ContinuousMoveProvider;
         [SerializeField] private SnapTurnProvider m_SnapTurnProvider;
         [SerializeField] private ContinuousTurnProvider m_ContinuousTurnProvider;
+        [SerializeField] private ClimbProvider m_ClimbProvider;
+        [SerializeField] private JumpProvider m_JumpProvider;
         [SerializeField] private TunnelingVignetteController m_VignetteController;
 
         [Header("Turn Input Action References")]
@@ -161,6 +165,12 @@ namespace LOG8704.Locomotion
 
             if (m_ContinuousTurnProvider == null)
                 m_ContinuousTurnProvider = FindFirstObjectByType<ContinuousTurnProvider>(FindObjectsInactive.Include);
+
+            if (m_ClimbProvider == null)
+                m_ClimbProvider = FindFirstObjectByType<ClimbProvider>(FindObjectsInactive.Include);
+
+            if (m_JumpProvider == null)
+                m_JumpProvider = FindFirstObjectByType<JumpProvider>(FindObjectsInactive.Include);
 
             if (m_VignetteController == null)
                 m_VignetteController = FindFirstObjectByType<TunnelingVignetteController>(FindObjectsInactive.Include);
@@ -405,52 +415,56 @@ namespace LOG8704.Locomotion
             if (m_VignetteController == null)
                 return;
 
-            var providers = m_VignetteController.locomotionVignetteProviders;
+            EnsureVignetteProvider(m_ContinuousMoveProvider);
+            EnsureVignetteProvider(m_ContinuousTurnProvider);
 
-            // Ensure ContinuousMoveProvider is registered
-            if (m_ContinuousMoveProvider != null)
+            // Smaller aperture values create a stronger vignette. Keep jump protection
+            // modestly stronger than the default and climbing protection barely visible.
+            EnsureVignetteProvider(m_JumpProvider, CreateVignetteParameters(0.62f, 0.08f, 0.2f));
+            EnsureVignetteProvider(m_ClimbProvider, CreateVignetteParameters(0.92f, 0.12f, 0.2f));
+        }
+
+        private static VignetteParameters CreateVignetteParameters(float apertureSize, float easeInTime, float easeOutTime)
+        {
+            return new VignetteParameters
             {
-                bool moveFound = false;
-                foreach (var p in providers)
+                apertureSize = apertureSize,
+                featheringEffect = 0.2f,
+                easeInTime = easeInTime,
+                easeOutTime = easeOutTime
+            };
+        }
+
+        private void EnsureVignetteProvider(UnityEngine.XR.Interaction.Toolkit.Locomotion.LocomotionProvider locomotionProvider, VignetteParameters overrideParameters = null)
+        {
+            if (locomotionProvider == null)
+                return;
+
+            var providers = m_VignetteController.locomotionVignetteProviders;
+            LocomotionVignetteProvider registration = null;
+            foreach (var provider in providers)
+            {
+                if (provider.locomotionProvider == locomotionProvider)
                 {
-                    if (p.locomotionProvider == m_ContinuousMoveProvider)
-                    {
-                        moveFound = true;
-                        p.enabled = m_IsVignetteActive;
-                        break;
-                    }
-                }
-                if (!moveFound)
-                {
-                    providers.Add(new LocomotionVignetteProvider
-                    {
-                        locomotionProvider = m_ContinuousMoveProvider,
-                        enabled = m_IsVignetteActive
-                    });
+                    registration = provider;
+                    break;
                 }
             }
 
-            // Ensure ContinuousTurnProvider is registered
-            if (m_ContinuousTurnProvider != null)
+            if (registration == null)
             {
-                bool turnFound = false;
-                foreach (var p in providers)
+                registration = new LocomotionVignetteProvider
                 {
-                    if (p.locomotionProvider == m_ContinuousTurnProvider)
-                    {
-                        turnFound = true;
-                        p.enabled = m_IsVignetteActive;
-                        break;
-                    }
-                }
-                if (!turnFound)
-                {
-                    providers.Add(new LocomotionVignetteProvider
-                    {
-                        locomotionProvider = m_ContinuousTurnProvider,
-                        enabled = m_IsVignetteActive
-                    });
-                }
+                    locomotionProvider = locomotionProvider
+                };
+                providers.Add(registration);
+            }
+
+            registration.enabled = m_IsVignetteActive;
+            if (overrideParameters != null)
+            {
+                registration.overrideDefaultParameters = true;
+                registration.overrideParameters = overrideParameters;
             }
         }
 
@@ -569,9 +583,12 @@ namespace LOG8704.Locomotion
                     provider.enabled = enabled;
                 }
 
-                if (!enabled && m_DashProvider != null)
+                if (!enabled)
                 {
-                    m_VignetteController.EndTunnelingVignette(m_DashProvider);
+                    foreach (var provider in m_VignetteController.locomotionVignetteProviders)
+                    {
+                        m_VignetteController.EndTunnelingVignette(provider);
+                    }
                 }
             }
 
