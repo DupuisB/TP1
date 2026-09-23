@@ -64223,10 +64223,10 @@ MonoBehaviour:
   m_SkinWidth: 0.12
   m_VignetteController: {fileID: 2127409896}
   m_VignetteParameters:
-    m_ApertureSize: 0.38
+    m_ApertureSize: 0.5
     m_FeatheringEffect: 0.2
-    m_EaseInTime: 0.03
-    m_EaseOutTime: 0.08
+    m_EaseInTime: 0.05
+    m_EaseOutTime: 0.15
     m_EaseInTimeLock: 0
     m_EaseOutDelayTime: 0
     m_VignetteColor: {r: 0, g: 0, b: 0, a: 1}
@@ -66326,15 +66326,15 @@ MonoBehaviour:
   m_AllowHoverHapticsWhileSelecting: 0
   m_LineType: 1
   m_BlendVisualLinePoints: 1
-  m_MaxRaycastDistance: 30
+  m_MaxRaycastDistance: 60
   m_RayOriginTransform: {fileID: 6179666787055338796}
   m_ReferenceFrame: {fileID: 0}
   m_Velocity: 10
   m_Acceleration: 9.8
-  m_AdditionalGroundHeight: 0.1
-  m_AdditionalFlightTime: 0.5
-  m_EndPointDistance: 30
-  m_EndPointHeight: -10
+  m_AdditionalGroundHeight: 100
+  m_AdditionalFlightTime: 5
+  m_EndPointDistance: 60
+  m_EndPointHeight: -50
   m_ControlPointDistance: 10
   m_ControlPointHeight: 5
   m_SampleFrequency: 50

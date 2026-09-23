@@ -46,10 +46,10 @@ namespace LOG8704.Locomotion
         [Tooltip("Custom vignette parameters for dash motion")]
         [SerializeField] private VignetteParameters m_VignetteParameters = new VignetteParameters
         {
-            apertureSize = 0.38f,
+            apertureSize = 0.5f,
             featheringEffect = 0.2f,
-            easeInTime = 0.03f,
-            easeOutTime = 0.08f
+            easeInTime = 0.05f,
+            easeOutTime = 0.15f
         };
 
         [Tooltip("Enable controller haptic pulses at dash launch and impact/landing")]
@@ -117,7 +117,7 @@ namespace LOG8704.Locomotion
             Vector3 playerGroundPos = new Vector3(headPos.x, originPos.y, headPos.z);
             Vector3 targetOriginPos = targetPosition + originPos - playerGroundPos;
 
-            // 2. Identify destination surface collider & platform root
+            // 2. Identify destination & start surface colliders & platform roots
             Collider destCollider = null;
             Transform destPlatform = null;
             if (Physics.Raycast(targetPosition + Vector3.up * 0.3f, Vector3.down, out RaycastHit destHit, 0.8f, m_ObstacleLayers, QueryTriggerInteraction.Ignore))
@@ -127,6 +127,18 @@ namespace LOG8704.Locomotion
                 if (destPlatform.parent != null && destPlatform.parent.GetComponentInParent<XROrigin>() == null)
                 {
                     destPlatform = destPlatform.parent;
+                }
+            }
+
+            Collider startCollider = null;
+            Transform startPlatform = null;
+            if (Physics.Raycast(playerGroundPos + Vector3.up * 0.3f, Vector3.down, out RaycastHit startHit, 0.8f, m_ObstacleLayers, QueryTriggerInteraction.Ignore))
+            {
+                startCollider = startHit.collider;
+                startPlatform = startHit.collider.transform;
+                if (startPlatform.parent != null && startPlatform.parent.GetComponentInParent<XROrigin>() == null)
+                {
+                    startPlatform = startPlatform.parent;
                 }
             }
 
@@ -150,7 +162,7 @@ namespace LOG8704.Locomotion
 
                 foreach (var hit in hits)
                 {
-                    if (!IsObstacle(hit.collider, hit.normal, destCollider, destPlatform, origin.transform))
+                    if (!IsObstacle(hit.collider, hit.normal, destCollider, destPlatform, startCollider, startPlatform, origin.transform))
                         continue;
 
                     // Obstacle (wall, pillar, barrier) directly in the path
@@ -172,7 +184,7 @@ namespace LOG8704.Locomotion
             return true;
         }
 
-        private bool IsObstacle(Collider col, Vector3 normal, Collider destCol, Transform destPlatform, Transform rigTransform)
+        private bool IsObstacle(Collider col, Vector3 normal, Collider destCol, Transform destPlatform, Collider startCol, Transform startPlatform, Transform rigTransform)
         {
             if (col == null || col.isTrigger)
                 return false;
@@ -187,6 +199,15 @@ namespace LOG8704.Locomotion
                 if (col == destCol)
                     return false;
                 if (destPlatform != null && (col.transform.IsChildOf(destPlatform) || destPlatform.IsChildOf(col.transform)))
+                    return false;
+            }
+
+            // Ignore start platform / surface colliders (so stepping off an elevated platform/box doesn't hit its front lip)
+            if (startCol != null)
+            {
+                if (col == startCol)
+                    return false;
+                if (startPlatform != null && (col.transform.IsChildOf(startPlatform) || startPlatform.IsChildOf(col.transform)))
                     return false;
             }
 
@@ -240,6 +261,7 @@ namespace LOG8704.Locomotion
                 // Elevation analysis: calculate clearance arc for elevated platforms and steps
                 float heightDiff = targetPosition.y - originStart.y;
                 bool isClimbing = heightDiff > 0.15f;
+                bool isDescending = heightDiff < -0.15f;
                 float arcHeight = isClimbing ? Mathf.Min(0.35f, heightDiff * 0.5f) : 0f;
 
                 float elapsed = 0f;
@@ -257,6 +279,12 @@ namespace LOG8704.Locomotion
                     {
                         float verticalArc = Mathf.Sin(t * Mathf.PI) * arcHeight;
                         desiredPos.y = Mathf.Lerp(originStart.y, targetPosition.y, Mathf.SmoothStep(0f, 1f, t)) + verticalArc;
+                    }
+                    else if (isDescending)
+                    {
+                        // Step out horizontally before dropping cleanly to lower ground
+                        float dropT = Mathf.Clamp01((t - 0.15f) / 0.85f);
+                        desiredPos.y = Mathf.Lerp(originStart.y, targetPosition.y, Mathf.SmoothStep(0f, 1f, dropT));
                     }
 
                     Vector3 frameStep = desiredPos - originTransform.position;

@@ -1145,6 +1145,35 @@ namespace LOG8704.Editor
                     EditorUtility.SetDirty(lv);
                 }
             }
+
+            // Remove vertical height/drop limits so player can aim far down from high platforms/roofs to the ground
+            var rayInteractors = rigInstance.GetComponentsInChildren<UnityEngine.XR.Interaction.Toolkit.Interactors.XRRayInteractor>(true);
+            foreach (var ray in rayInteractors)
+            {
+                if (ray.name.Contains("Teleport") || (ray.transform.parent != null && ray.transform.parent.name.Contains("Teleport")))
+                {
+                    var soRay = new SerializedObject(ray);
+                    soRay.Update();
+                    var gndH = soRay.FindProperty("m_AdditionalGroundHeight");
+                    if (gndH != null) gndH.floatValue = 100f;
+                    var fltT = soRay.FindProperty("m_AdditionalFlightTime");
+                    if (fltT != null) fltT.floatValue = 5f;
+                    var maxD = soRay.FindProperty("m_MaxRaycastDistance");
+                    if (maxD != null) maxD.floatValue = 60f;
+                    var endD = soRay.FindProperty("m_EndPointDistance");
+                    if (endD != null) endD.floatValue = 60f;
+                    var endH = soRay.FindProperty("m_EndPointHeight");
+                    if (endH != null) endH.floatValue = -50f;
+                    soRay.ApplyModifiedPropertiesWithoutUndo();
+
+                    ray.additionalGroundHeight = 100f;
+                    ray.additionalFlightTime = 5f;
+                    ray.maxRaycastDistance = 60f;
+                    ray.endPointDistance = 60f;
+                    ray.endPointHeight = -50f;
+                    EditorUtility.SetDirty(ray);
+                }
+            }
         }
 
         private static void SetupEventSystem()

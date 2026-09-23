@@ -206,6 +206,20 @@ namespace LOG8704.Locomotion
                     lv.stopLineAtFirstRaycastHit = true;
                 }
             }
+
+            // Remove vertical height/drop limits so player can aim far down from high platforms/roofs to the ground
+            var rayInteractors = FindObjectsByType<UnityEngine.XR.Interaction.Toolkit.Interactors.XRRayInteractor>(FindObjectsSortMode.None);
+            foreach (var ray in rayInteractors)
+            {
+                if (ray.name.Contains("Teleport") || (ray.transform.parent != null && ray.transform.parent.name.Contains("Teleport")))
+                {
+                    ray.additionalGroundHeight = 100f;
+                    ray.additionalFlightTime = 5f;
+                    ray.maxRaycastDistance = 60f;
+                    ray.endPointDistance = 60f;
+                    ray.endPointHeight = -50f;
+                }
+            }
         }
 
         /// <summary>
