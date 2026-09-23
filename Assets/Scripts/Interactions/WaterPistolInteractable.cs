@@ -32,6 +32,12 @@ namespace LOG8704.Interactions
         [Tooltip("Movable trigger mesh for pull feedback.")]
         [SerializeField] private Transform m_TriggerMesh;
 
+        [Header("Water Shot")]
+        [SerializeField, Min(0.1f)] private float m_WaterRange = 8f;
+        [SerializeField, Min(0.001f)] private float m_WaterWidth = 0.012f;
+        [SerializeField] private Color m_WaterColor = new Color(0.35f, 0.8f, 1f, 0.9f);
+        [SerializeField, Min(0.01f)] private float m_ShotFlashDuration = 0.07f;
+
         [Header("Trigger Animation Parameters")]
         [SerializeField] private Vector3 m_TriggerPulledLocalEuler = new Vector3(15f, 0f, 0f);
         [SerializeField] private Vector3 m_TriggerPulledLocalOffset = new Vector3(0f, -0.002f, -0.006f);
@@ -50,6 +56,9 @@ namespace LOG8704.Interactions
         private Quaternion m_TriggerRestLocalRot;
         private bool m_IsTriggerPressed;
         private IXRSelectInteractor m_CurrentHolder;
+        private LineRenderer m_WaterStream;
+        private Material m_WaterMaterial;
+        private float m_ShotFlashRemaining;
 
         public Transform muzzlePoint => m_MuzzlePoint;
         public bool isTriggerPressed => m_IsTriggerPressed;
@@ -57,11 +66,17 @@ namespace LOG8704.Interactions
 
         protected override void Awake()
         {
+            // XRI needs at least one collider to register hover/select. The source
+            // art prefab has no collider, so make the weapon usable even when an
+            // older generated prefab is still in the project.
+            EnsureInteractionCollider();
             base.Awake();
 
             // Setup default physics for throwing and collision response
-            movementType = MovementType.VelocityTracking;
-            throwOnDetach = true;
+            movementType = MovementType.Kinematic;
+            smoothPosition = true;
+            smoothRotation = true;
+            throwOnDetach = false;
             throwVelocityScale = 1.25f;
             throwAngularVelocityScale = 1.0f;
 
@@ -70,6 +85,7 @@ namespace LOG8704.Interactions
 
             // Ensure attach transforms exist if not assigned in inspector
             EnsureAttachTransforms();
+            SetupWaterStream();
 
             // Cache trigger resting pose
             if (m_TriggerMesh != null)
@@ -77,6 +93,25 @@ namespace LOG8704.Interactions
                 m_TriggerRestLocalPos = m_TriggerMesh.localPosition;
                 m_TriggerRestLocalRot = m_TriggerMesh.localRotation;
             }
+        }
+
+        public override bool IsSelectableBy(IXRSelectInteractor interactor)
+        {
+            // The Quest rig uses XRI Near-Far interactors, which are not
+            // XRDirectInteractor instances. Let XRI decide based on the active
+            // interactor, layers, and selection state.
+            return base.IsSelectableBy(interactor);
+        }
+
+        private void EnsureInteractionCollider()
+        {
+            var colliders = GetComponentsInChildren<Collider>(true);
+            if (colliders.Length > 0)
+                return;
+
+            var box = gameObject.AddComponent<BoxCollider>();
+            box.center = new Vector3(0f, 0.04f, 0.08f);
+            box.size = new Vector3(0.08f, 0.18f, 0.30f);
         }
 
         private void EnsureAttachTransforms()
@@ -216,13 +251,76 @@ namespace LOG8704.Interactions
 
         protected virtual void FireWaterShot()
         {
-            // Extension point for shooting phase (FX, particles, audio, hit detection)
-            Debug.Log($"[WaterPistol] Trigger pulled on {name}! Muzzle at {m_MuzzlePoint.position}");
+            // XRI Activate is edge triggered, so each press produces one short
+            // hitscan flash instead of a continuous beam while held.
+            m_ShotFlashRemaining = m_ShotFlashDuration;
+            UpdateWaterShotLine();
         }
 
         protected virtual void Update()
         {
             AnimateTrigger();
+            if (m_ShotFlashRemaining > 0f)
+            {
+                m_ShotFlashRemaining -= Time.deltaTime;
+                UpdateWaterShotLine();
+            }
+            else if (m_WaterStream != null)
+            {
+                m_WaterStream.enabled = false;
+            }
+        }
+
+        private void SetupWaterStream()
+        {
+            if (m_MuzzlePoint == null) return;
+
+            var streamObject = new GameObject("WaterStream");
+            streamObject.transform.SetParent(transform, false);
+            m_WaterStream = streamObject.AddComponent<LineRenderer>();
+            m_WaterStream.useWorldSpace = true;
+            m_WaterStream.positionCount = 2;
+            m_WaterStream.startWidth = m_WaterWidth;
+            m_WaterStream.endWidth = m_WaterWidth * 0.35f;
+            m_WaterStream.startColor = m_WaterColor;
+            m_WaterStream.endColor = m_WaterColor;
+            m_WaterStream.numCapVertices = 2;
+            m_WaterStream.enabled = false;
+
+            var shader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default");
+            if (shader != null)
+            {
+                m_WaterMaterial = new Material(shader) { color = m_WaterColor };
+                m_WaterStream.material = m_WaterMaterial;
+            }
+        }
+
+        private void UpdateWaterShotLine()
+        {
+            if (m_WaterStream == null || m_MuzzlePoint == null) return;
+
+            m_WaterStream.enabled = true;
+
+            Vector3 start = m_MuzzlePoint.position;
+            Vector3 direction = m_MuzzlePoint.forward;
+            Vector3 end = start + direction * m_WaterRange;
+            if (Physics.Raycast(start, direction, out RaycastHit hit, m_WaterRange, ~0, QueryTriggerInteraction.Ignore) &&
+                !hit.transform.IsChildOf(transform))
+                end = hit.point;
+
+            m_WaterStream.startWidth = m_WaterWidth;
+            m_WaterStream.endWidth = m_WaterWidth * 0.35f;
+            m_WaterStream.SetPosition(0, start);
+            m_WaterStream.SetPosition(1, end);
+        }
+
+        private void OnDestroy()
+        {
+            if (m_WaterMaterial != null)
+            {
+                if (Application.isPlaying) Destroy(m_WaterMaterial);
+                else DestroyImmediate(m_WaterMaterial);
+            }
         }
 
         private void AnimateTrigger()

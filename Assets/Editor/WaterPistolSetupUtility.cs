@@ -41,7 +41,8 @@ namespace LOG8704.Editor
             rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
             rb.interpolation = RigidbodyInterpolation.Interpolate;
 
-            // 2. Configure Convex MeshCollider
+            // 2. Configure an interaction collider. The source art prefab has no
+            // collider, so a convex root BoxCollider is the reliable fallback.
             var col = instance.GetComponent<MeshCollider>();
             if (col != null)
             {
@@ -93,8 +94,10 @@ namespace LOG8704.Editor
             if (pistolInteractable == null)
                 pistolInteractable = instance.AddComponent<WaterPistolInteractable>();
 
-            pistolInteractable.movementType = XRBaseInteractable.MovementType.VelocityTracking;
-            pistolInteractable.throwOnDetach = true;
+            pistolInteractable.movementType = XRBaseInteractable.MovementType.Kinematic;
+            pistolInteractable.smoothPosition = true;
+            pistolInteractable.smoothRotation = true;
+            pistolInteractable.throwOnDetach = false;
             pistolInteractable.throwVelocityScale = 1.25f;
             pistolInteractable.throwAngularVelocityScale = 1.0f;
             pistolInteractable.interactionLayers = unchecked((int)2147483648) | 1;

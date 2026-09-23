@@ -289,7 +289,7 @@ MonoBehaviour:
   m_SnapToColliderVolume: 1
   m_ReinitializeDynamicAttachEverySingleGrab: 1
   m_AttachEaseInTime: 0.15
-  m_MovementType: 0
+  m_MovementType: 1
   m_PredictedVisualsTransform: {fileID: 2964402362071194771}
   m_VelocityDamping: 1
   m_VelocityScale: 1
@@ -307,7 +307,7 @@ MonoBehaviour:
   m_SmoothScale: 0
   m_SmoothScaleAmount: 8
   m_TightenScale: 0.1
-  m_ThrowOnDetach: 1
+  m_ThrowOnDetach: 0
   m_ThrowSmoothingDuration: 0.25
   m_ThrowSmoothingCurve:
     serializedVersion: 2
@@ -341,6 +341,9 @@ MonoBehaviour:
   m_LeftAttachTransform: {fileID: 400006}
   m_MuzzlePoint: {fileID: 400008}
   m_TriggerMesh: {fileID: 2964402362071194771}
+  m_WaterRange: 8
+  m_WaterWidth: 0.012
+  m_WaterColor: {r: 0.35, g: 0.8, b: 1, a: 0.9}
   m_TriggerPulledLocalEuler: {x: 15, y: 0, z: 0}
   m_TriggerPulledLocalOffset: {x: 0, y: -0.002, z: -0.006}
   m_TriggerReturnSpeed: 18
