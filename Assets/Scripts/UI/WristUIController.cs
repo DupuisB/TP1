@@ -1,10 +1,14 @@
 using System;
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using TMPro;
 using LOG8704.Locomotion;
 using UnityEngine.XR.Interaction.Toolkit.UI;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace LOG8704.UI
 {
@@ -21,6 +25,40 @@ namespace LOG8704.UI
         [Header("Canvas Group for Glance Visibility")]
         [SerializeField] private CanvasGroup m_CanvasGroup;
         [SerializeField] private bool m_ForceVisibleForDesktop = false;
+
+        [Header("Debug Visibility")]
+        [Tooltip("For debugging: keeps the wrist UI always visible and bypasses glance detection.")]
+        [SerializeField] private bool m_DebugAlwaysVisible = false;
+
+        [Tooltip("Base world scale of the wrist UI root.")]
+        [SerializeField] private float m_BaseWorldScale = 0.000585f;
+
+        [Tooltip("For debugging: multiplies wrist UI scale to make it easier to inspect.")]
+        [SerializeField] private float m_DebugScaleMultiplier = 1f;
+
+        [Tooltip("For debugging: boosts panel background alpha for readability.")]
+        [SerializeField] private bool m_DebugBoostPanelOpacity = false;
+
+        [Tooltip("Panel alpha used when Debug Boost Panel Opacity is enabled.")]
+        [SerializeField] private float m_DebugPanelAlpha = 1f;
+
+        [Tooltip("For debugging: detaches UI from the left controller so you can move it freely.")]
+        [SerializeField] private bool m_DebugDetachFromWrist = false;
+
+        [Tooltip("World position applied once when enabling Debug Detach From Wrist.")]
+        [SerializeField] private Vector3 m_DebugDetachedWorldPosition = new Vector3(0f, 1.35f, 0.55f);
+
+        [Tooltip("World rotation applied once when enabling Debug Detach From Wrist.")]
+        [SerializeField] private Vector3 m_DebugDetachedWorldEuler = new Vector3(0f, 180f, 0f);
+
+        [Tooltip("For debugging: keep detached UI pinned in front of the camera.")]
+        [SerializeField] private bool m_DebugPinInFrontOfCamera = false;
+
+        [Tooltip("Distance from camera when Pin In Front Of Camera is enabled.")]
+        [SerializeField] private float m_DebugCameraDistance = 0.55f;
+
+        [Tooltip("Extra camera-space offset (x=right, y=up, z=forward) when pinned in front of camera.")]
+        [SerializeField] private Vector3 m_DebugCameraOffset = new Vector3(0f, -0.04f, 0f);
 
         [Header("Transform Placement (Smartwatch Offset)")]
         [Tooltip("Local position relative to Left Controller (X: Left[-]/Right[+], Y: Up[+]/Down[-], Z: Forward[+]/Back[-] along forearm). Defaults to dorsal smartwatch position.")]
@@ -49,6 +87,7 @@ namespace LOG8704.UI
         [SerializeField] private float m_MaxHeightBelowHmd = 0.65f;
 
         [Header("Sprites for Icons")]
+        [SerializeField] private bool m_LogIconBinding = true;
         [SerializeField] private Sprite m_WalkSprite;
         [SerializeField] private Sprite m_TeleportSprite;
         [SerializeField] private Sprite m_DashSprite;
@@ -110,6 +149,10 @@ namespace LOG8704.UI
         private Camera m_MainCamera;
         private bool m_Subscribed = false;
         private float m_NextPollTime;
+        private Image m_BackgroundPanelImage;
+        private Transform m_OriginalWristParent;
+        private bool m_DebugDetachApplied;
+        private static Sprite s_RoundedPanelSprite;
 
         public void SetSprites(Sprite walk, Sprite tele, Sprite dash, Sprite blink, Sprite vig, Sprite turn)
         {
@@ -130,7 +173,13 @@ namespace LOG8704.UI
 
         private void Start()
         {
+            CacheOriginalParentIfNeeded();
+            ApplyDebugAttachmentSettings();
             ApplyTransformOffset();
+            ApplyDebugVisualSettings();
+            ApplyExistingUiTextLayoutFixes();
+            EnsureDefaultSpritesLoadedInEditor();
+            ApplySerializedSpritesToIcons();
 
             if (m_CanvasGroup == null)
                 m_CanvasGroup = GetComponent<CanvasGroup>() ?? gameObject.AddComponent<CanvasGroup>();
@@ -157,6 +206,11 @@ namespace LOG8704.UI
             UpdateEditorTransformSync();
 #endif
 
+            ApplyDebugAttachmentSettings();
+            if (m_DebugDetachFromWrist && m_DebugPinInFrontOfCamera)
+                SnapDetachedUiInFrontOfCamera();
+            ApplyDebugVisualSettings();
+
             UpdateGlanceVisibility();
 
             if (!m_Subscribed)
@@ -176,8 +230,15 @@ namespace LOG8704.UI
 
         public void ApplyTransformOffset()
         {
+            if (m_DebugDetachFromWrist)
+            {
+                ApplyScale();
+                return;
+            }
+
             transform.localPosition = m_UiLocalPosition;
             transform.localRotation = Quaternion.Euler(m_UiLocalEuler);
+            ApplyScale();
         }
 
         public void SetTransformOffset(Vector3 pos, Vector3 rotEuler)
@@ -190,12 +251,19 @@ namespace LOG8704.UI
 #if UNITY_EDITOR
         private void OnValidate()
         {
+            CacheOriginalParentIfNeeded();
+            ApplyDebugAttachmentSettings();
             ApplyTransformOffset();
+            ApplyDebugVisualSettings();
+            ApplyExistingUiTextLayoutFixes();
+            EnsureDefaultSpritesLoadedInEditor();
+            ApplySerializedSpritesToIcons();
         }
 
         private void UpdateEditorTransformSync()
         {
             if (!m_LiveSyncInEditor) return;
+            if (m_DebugDetachFromWrist) return;
             if (Application.isPlaying) return; // Prevent VR controller tracking updates from trampling inspector edits during play mode
 
             // Keep Inspector fields and Scene Transform synchronized
@@ -213,6 +281,167 @@ namespace LOG8704.UI
             }
         }
 #endif
+
+        private void ApplySerializedSpritesToIcons()
+        {
+            if (m_WalkIconImg != null && m_WalkSprite != null) m_WalkIconImg.sprite = m_WalkSprite;
+            if (m_TeleportIconImg != null && m_TeleportSprite != null) m_TeleportIconImg.sprite = m_TeleportSprite;
+            if (m_DashIconImg != null && m_DashSprite != null) m_DashIconImg.sprite = m_DashSprite;
+            if (m_BlinkIconImg != null && m_BlinkSprite != null) m_BlinkIconImg.sprite = m_BlinkSprite;
+            if (m_VignetteIconImg != null && m_VignetteSprite != null) m_VignetteIconImg.sprite = m_VignetteSprite;
+            if (m_TurnIconImg != null && m_TurnSprite != null) m_TurnIconImg.sprite = m_TurnSprite;
+
+            if (m_LogIconBinding)
+            {
+                Debug.Log($"[WristUIController] Icon binding status => " +
+                    $"Walk:{(m_WalkIconImg != null && m_WalkIconImg.sprite != null)} " +
+                    $"Tele:{(m_TeleportIconImg != null && m_TeleportIconImg.sprite != null)} " +
+                    $"Dash:{(m_DashIconImg != null && m_DashIconImg.sprite != null)} " +
+                    $"Blink:{(m_BlinkIconImg != null && m_BlinkIconImg.sprite != null)} " +
+                    $"Vignette:{(m_VignetteIconImg != null && m_VignetteIconImg.sprite != null)} " +
+                    $"Turn:{(m_TurnIconImg != null && m_TurnIconImg.sprite != null)}");
+            }
+        }
+
+        private void EnsureDefaultSpritesLoadedInEditor()
+        {
+#if UNITY_EDITOR
+            TryLoadSpriteIfMissing(ref m_WalkSprite, "Assets/Textures/Icons/walk.png");
+            TryLoadSpriteIfMissing(ref m_TeleportSprite, "Assets/Textures/Icons/teleport.png");
+            TryLoadSpriteIfMissing(ref m_DashSprite, "Assets/Textures/Icons/sprint.png");
+            TryLoadSpriteIfMissing(ref m_BlinkSprite, "Assets/Textures/Icons/eye-target.png");
+            TryLoadSpriteIfMissing(ref m_VignetteSprite, "Assets/Textures/Icons/air-zigzag.png");
+            TryLoadSpriteIfMissing(ref m_TurnSprite, "Assets/Textures/Icons/clockwise-rotation.png");
+#endif
+        }
+
+#if UNITY_EDITOR
+        private void TryLoadSpriteIfMissing(ref Sprite target, string assetPath)
+        {
+            if (target != null)
+                return;
+
+            var sprite = LoadSpriteAtOrNearPath(assetPath);
+            if (sprite != null)
+            {
+                target = sprite;
+                EditorUtility.SetDirty(this);
+                if (m_LogIconBinding)
+                    Debug.Log($"[WristUIController] Loaded missing sprite: {assetPath}");
+            }
+            else if (m_LogIconBinding)
+            {
+                Debug.LogWarning($"[WristUIController] Missing sprite at path: {assetPath}");
+            }
+        }
+
+        private Sprite LoadSpriteAtOrNearPath(string assetPath)
+        {
+            EnsureAssetImportedAsSprite(assetPath);
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
+            if (sprite != null)
+                return sprite;
+
+            string fileName = Path.GetFileNameWithoutExtension(assetPath);
+            var guids = AssetDatabase.FindAssets($"{fileName} t:Texture2D", new[] { "Assets/Textures/Icons" });
+            for (int i = 0; i < guids.Length; i++)
+            {
+                string foundPath = AssetDatabase.GUIDToAssetPath(guids[i]);
+                EnsureAssetImportedAsSprite(foundPath);
+                sprite = AssetDatabase.LoadAssetAtPath<Sprite>(foundPath);
+                if (sprite != null)
+                {
+                    if (m_LogIconBinding)
+                        Debug.Log($"[WristUIController] Found sprite via search: {foundPath}");
+                    return sprite;
+                }
+            }
+
+            return null;
+        }
+
+        private void EnsureAssetImportedAsSprite(string assetPath)
+        {
+            var importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+            if (importer == null)
+                return;
+
+            bool changed = false;
+            if (importer.textureType != TextureImporterType.Sprite)
+            {
+                importer.textureType = TextureImporterType.Sprite;
+                changed = true;
+            }
+
+            if (importer.spriteImportMode != SpriteImportMode.Single)
+            {
+                importer.spriteImportMode = SpriteImportMode.Single;
+                changed = true;
+            }
+
+            if (!importer.alphaIsTransparency)
+            {
+                importer.alphaIsTransparency = true;
+                changed = true;
+            }
+
+            if (changed)
+                importer.SaveAndReimport();
+        }
+#endif
+
+        private void ApplyExistingUiTextLayoutFixes()
+        {
+            RemoveLegacyHeaderTextObjects();
+            ApplyCenteredTextBlock("MoveHeader", 13f, TextAlignmentOptions.Center);
+            ApplyCenteredTextBlock("OptHeader", 13f, TextAlignmentOptions.Center);
+            ApplyCenteredTextBlock("HUD_Summary", 12f, TextAlignmentOptions.Center);
+            ApplyCenteredTextBlock("GlanceHint", 11f, TextAlignmentOptions.Center);
+        }
+
+        private void RemoveLegacyHeaderTextObjects()
+        {
+            RemoveTextObjectIfPresent("HeaderTitle");
+            RemoveTextObjectIfPresent("SubTitle");
+        }
+
+        private void RemoveTextObjectIfPresent(string objectName)
+        {
+            var t = transform.Find($"BackgroundPanel/{objectName}");
+            if (t == null)
+                return;
+
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+                DestroyImmediate(t.gameObject);
+            else
+#endif
+                Destroy(t.gameObject);
+        }
+
+        private void ApplyCenteredTextBlock(string objectName, float fontSize, TextAlignmentOptions alignment)
+        {
+            var t = transform.Find($"BackgroundPanel/{objectName}");
+            if (t == null)
+                return;
+
+            var rect = t.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                rect.anchorMin = new Vector2(0.5f, 0.5f);
+                rect.anchorMax = new Vector2(0.5f, 0.5f);
+                rect.pivot = new Vector2(0.5f, 0.5f);
+            }
+
+            var text = t.GetComponent<TMP_Text>();
+            if (text != null)
+            {
+                text.alignment = alignment;
+                text.fontSize = fontSize;
+                text.enableWordWrapping = false;
+                text.overflowMode = TextOverflowModes.Overflow;
+            }
+        }
 
         private void UpdateGlanceVisibility()
         {
@@ -264,7 +493,7 @@ namespace LOG8704.UI
                 isLookingAtWrist = isFacingCamera && inViewingDistance && atViewingHeight && isLookingTowardWrist;
             }
 
-            bool shouldBeVisible = isLookingAtWrist || m_ForceVisibleForDesktop;
+            bool shouldBeVisible = isLookingAtWrist || m_ForceVisibleForDesktop || m_DebugAlwaysVisible || m_DebugDetachFromWrist;
             float targetAlpha = shouldBeVisible ? 1f : 0f;
 
             if (m_CanvasGroup != null)
@@ -273,6 +502,89 @@ namespace LOG8704.UI
                 bool interactive = m_CanvasGroup.alpha > 0.1f;
                 m_CanvasGroup.interactable = interactive;
                 m_CanvasGroup.blocksRaycasts = interactive;
+            }
+        }
+
+        private void CacheOriginalParentIfNeeded()
+        {
+            if (m_OriginalWristParent == null && transform.parent != null)
+                m_OriginalWristParent = transform.parent;
+        }
+
+        private void ApplyDebugAttachmentSettings()
+        {
+            if (m_DebugDetachFromWrist == m_DebugDetachApplied)
+                return;
+
+            if (m_DebugDetachFromWrist)
+            {
+                CacheOriginalParentIfNeeded();
+                transform.SetParent(null, true);
+                if (m_DebugPinInFrontOfCamera)
+                    SnapDetachedUiInFrontOfCamera();
+                else
+                {
+                    transform.position = m_DebugDetachedWorldPosition;
+                    transform.rotation = Quaternion.Euler(m_DebugDetachedWorldEuler);
+                }
+            }
+            else
+            {
+                if (m_OriginalWristParent != null)
+                    transform.SetParent(m_OriginalWristParent, false);
+                ApplyTransformOffset();
+            }
+
+            m_DebugDetachApplied = m_DebugDetachFromWrist;
+        }
+
+        private void SnapDetachedUiInFrontOfCamera()
+        {
+            if (m_MainCamera == null)
+            {
+                m_MainCamera = Camera.main;
+                if (m_MainCamera == null)
+                {
+                    var camObj = GameObject.FindWithTag("MainCamera");
+                    if (camObj != null) m_MainCamera = camObj.GetComponent<Camera>();
+                }
+            }
+
+            if (m_MainCamera == null)
+                return;
+
+            Transform camT = m_MainCamera.transform;
+            float dist = Mathf.Max(0.15f, m_DebugCameraDistance);
+            Vector3 targetPos = camT.position + camT.forward * dist + camT.right * m_DebugCameraOffset.x + camT.up * m_DebugCameraOffset.y + camT.forward * m_DebugCameraOffset.z;
+            transform.position = targetPos;
+            transform.rotation = Quaternion.LookRotation(transform.position - camT.position, Vector3.up);
+        }
+
+        private void ApplyScale()
+        {
+            float scale = Mathf.Max(0.00001f, m_BaseWorldScale);
+            float debugMultiplier = Mathf.Max(0.1f, m_DebugScaleMultiplier);
+            if (m_DebugAlwaysVisible)
+                scale *= debugMultiplier;
+            transform.localScale = Vector3.one * scale;
+        }
+
+        private void ApplyDebugVisualSettings()
+        {
+            ApplyScale();
+
+            if (m_BackgroundPanelImage == null)
+            {
+                var panel = transform.Find("BackgroundPanel");
+                if (panel != null)
+                    m_BackgroundPanelImage = panel.GetComponent<Image>();
+            }
+
+            if (m_BackgroundPanelImage != null)
+            {
+                Color panelColor = m_BackgroundPanelImage.color;
+                panelColor.a = m_DebugBoostPanelOpacity ? Mathf.Clamp01(m_DebugPanelAlpha) : 0.96f;
+                m_BackgroundPanelImage.color = panelColor;
             }
         }
 
@@ -420,6 +732,17 @@ namespace LOG8704.UI
             var root = new GameObject("Wrist_Comfort_UI");
             Vector3 pos = initialPos ?? new Vector3(-0.08f, 0.03f, -0.07f);
             Vector3 rotEuler = initialRotEuler ?? new Vector3(15f, -80f, -25f);
+            const float basePanelWidth = 430f;
+            const float basePanelHeight = 380f;
+            float panelWidth = basePanelWidth;
+            float panelHeight = basePanelHeight;
+            float scaleX = panelWidth / basePanelWidth;
+            float scaleY = panelHeight / basePanelHeight;
+            float uiScale = Mathf.Min(scaleX, scaleY);
+
+            Vector2 ScalePos(float x, float y) => new Vector2(x * scaleX, y * scaleY);
+            Vector2 ScaleSize(float w, float h) => new Vector2(w * scaleX, h * scaleY);
+            float ScaleFont(float f) => f * uiScale;
 
             if (wristAnchor != null)
             {
@@ -429,13 +752,13 @@ namespace LOG8704.UI
                 root.transform.localPosition = pos;
                 root.transform.localRotation = Quaternion.Euler(rotEuler);
             }
-            root.transform.localScale = Vector3.one * 0.00045f;
+            root.transform.localScale = Vector3.one * 0.000585f;
 
             // Canvas setup
             var canvas = root.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
             var rect = root.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(460f, 400f);
+            rect.sizeDelta = new Vector2(panelWidth, panelHeight);
 
             var canvasGroup = root.AddComponent<CanvasGroup>();
             canvasGroup.alpha = 0f; // Starts hidden until wrist glance
@@ -454,31 +777,26 @@ namespace LOG8704.UI
 
             var panelImg = panelObj.AddComponent<Image>();
             panelImg.color = new Color(0.05f, 0.07f, 0.11f, 0.96f); // Deep dark obsidian
+            panelImg.sprite = GetOrCreateRoundedPanelSprite();
+            panelImg.type = Image.Type.Sliced;
 
             var controller = root.AddComponent<WristUIController>();
             controller.m_CanvasGroup = canvasGroup;
             controller.m_UiLocalPosition = pos;
             controller.m_UiLocalEuler = rotEuler;
+            controller.m_BaseWorldScale = 0.000585f;
+            controller.m_BackgroundPanelImage = panelImg;
 
-            // 1. Futuristic Header Title
-            var title = CreateTMPText(panelObj.transform, "HeaderTitle", "GAUNTLET OS // LOG8704", 17, FontStyles.Bold, new Vector2(0f, 180f), new Vector2(460f, 26f));
-            title.color = new Color(0.22f, 0.74f, 0.98f); // Neon Cyan
-            title.alignment = TextAlignmentOptions.Left;
-
-            var subTitle = CreateTMPText(panelObj.transform, "SubTitle", "CONTRÔLE LOCOMOTION & CONFORT VR", 10, FontStyles.Normal, new Vector2(0f, 158f), new Vector2(460f, 18f));
-            subTitle.color = new Color(0.55f, 0.65f, 0.75f);
-            subTitle.alignment = TextAlignmentOptions.Left;
-
-            // 2. Section 1: Déplacement Header
-            var moveHeader = CreateTMPText(panelObj.transform, "MoveHeader", "MODE DE DÉPLACEMENT", 12, FontStyles.Bold, new Vector2(0f, 130f), new Vector2(460f, 20f));
+            // 1. Section: Déplacement
+            var moveHeader = CreateTMPText(panelObj.transform, "MoveHeader", "MODE DE DÉPLACEMENT", ScaleFont(13f), FontStyles.Bold, ScalePos(0f, 152f), ScaleSize(430f, 20f));
             moveHeader.color = new Color(0.96f, 0.62f, 0.04f); // Warm Amber
-            moveHeader.alignment = TextAlignmentOptions.Left;
+            moveHeader.alignment = TextAlignmentOptions.Center;
 
             // Row 1: 3 Icon Cards (Walk, Teleport, Dash)
-            float cardY1 = 65f;
-            var (walkBtn, walkBg, walkIcon, walkLed, walkTxt) = CreateIconCard(panelObj.transform, "Card_Walk", new Vector2(-150f, cardY1), new Vector2(140f, 95f), "CONTINU");
-            var (teleBtn, teleBg, teleIcon, teleLed, teleTxt) = CreateIconCard(panelObj.transform, "Card_Teleport", new Vector2(0f, cardY1), new Vector2(140f, 95f), "TÉLÉPORT");
-            var (dashBtn, dashBg, dashIcon, dashLed, dashTxt) = CreateIconCard(panelObj.transform, "Card_Dash", new Vector2(150f, cardY1), new Vector2(140f, 95f), "DASH (0.2s)");
+            Vector2 cardSize = ScaleSize(128f, 90f);
+            var (walkBtn, walkBg, walkIcon, walkLed, walkTxt) = CreateIconCard(panelObj.transform, "Card_Walk", ScalePos(-138f, 90f), cardSize, "CONTINU", uiScale, ScaleFont(12f));
+            var (teleBtn, teleBg, teleIcon, teleLed, teleTxt) = CreateIconCard(panelObj.transform, "Card_Teleport", ScalePos(0f, 90f), cardSize, "TÉLÉPORT", uiScale, ScaleFont(12f));
+            var (dashBtn, dashBg, dashIcon, dashLed, dashTxt) = CreateIconCard(panelObj.transform, "Card_Dash", ScalePos(138f, 90f), cardSize, "DASH (0.2s)", uiScale, ScaleFont(12f));
 
             controller.m_WalkButton = walkBtn;
             controller.m_WalkCardBg = walkBg;
@@ -498,16 +816,15 @@ namespace LOG8704.UI
             controller.m_DashLedDot = dashLed;
             controller.m_DashStatusText = dashTxt;
 
-            // 3. Section 2: Confort & Rotation Header
-            var optHeader = CreateTMPText(panelObj.transform, "OptHeader", "OPTIONS DE CONFORT & ROTATION", 12, FontStyles.Bold, new Vector2(0f, 0f), new Vector2(460f, 20f));
+            // 2. Section: Confort & Rotation
+            var optHeader = CreateTMPText(panelObj.transform, "OptHeader", "OPTIONS DE CONFORT & ROTATION", ScaleFont(13f), FontStyles.Bold, ScalePos(0f, 28f), ScaleSize(430f, 20f));
             optHeader.color = new Color(0.96f, 0.62f, 0.04f);
-            optHeader.alignment = TextAlignmentOptions.Left;
+            optHeader.alignment = TextAlignmentOptions.Center;
 
             // Row 2: 3 Icon Cards (Blink, Vignette, Turn)
-            float cardY2 = -65f;
-            var (blinkBtn, blinkBg, blinkIcon, blinkLed, blinkTxt) = CreateIconCard(panelObj.transform, "Card_Blink", new Vector2(-150f, cardY2), new Vector2(140f, 95f), "BLINK: ON");
-            var (vigBtn, vigBg, vigIcon, vigLed, vigTxt) = CreateIconCard(panelObj.transform, "Card_Vignette", new Vector2(0f, cardY2), new Vector2(140f, 95f), "OEILLÈRE: ON");
-            var (turnBtn, turnBg, turnIcon, turnLed, turnTxt) = CreateIconCard(panelObj.transform, "Card_Turn", new Vector2(150f, cardY2), new Vector2(140f, 95f), "SNAP 45°");
+            var (blinkBtn, blinkBg, blinkIcon, blinkLed, blinkTxt) = CreateIconCard(panelObj.transform, "Card_Blink", ScalePos(-138f, -40f), cardSize, "BLINK: ON", uiScale, ScaleFont(12f));
+            var (vigBtn, vigBg, vigIcon, vigLed, vigTxt) = CreateIconCard(panelObj.transform, "Card_Vignette", ScalePos(0f, -40f), cardSize, "OEILLÈRE: ON", uiScale, ScaleFont(12f));
+            var (turnBtn, turnBg, turnIcon, turnLed, turnTxt) = CreateIconCard(panelObj.transform, "Card_Turn", ScalePos(138f, -40f), cardSize, "SNAP 45°", uiScale, ScaleFont(12f));
 
             controller.m_BlinkButton = blinkBtn;
             controller.m_BlinkCardBg = blinkBg;
@@ -528,19 +845,19 @@ namespace LOG8704.UI
             controller.m_TurnStatusText = turnTxt;
 
             // 4. Bottom HUD Summary Strip
-            var hud = CreateTMPText(panelObj.transform, "HUD_Summary", "MODE: Teleport • BLINK: ON • VIGNETTE: ON • ROTATION: Snap", 11, FontStyles.Normal, new Vector2(0f, -140f), new Vector2(460f, 24f));
+            var hud = CreateTMPText(panelObj.transform, "HUD_Summary", "MODE: Teleport • BLINK: ON • VIGNETTE: ON • ROTATION: Snap", ScaleFont(12f), FontStyles.Normal, ScalePos(0f, -132f), ScaleSize(430f, 24f));
             hud.color = Color.white;
             controller.m_HudSummaryText = hud;
 
             // 5. Glance Hint
-            var hint = CreateTMPText(panelObj.transform, "GlanceHint", "Tourner le poignet vers soi pour ouvrir • [M] Touche Desktop", 10, FontStyles.Italic, new Vector2(0f, -170f), new Vector2(460f, 20f));
+            var hint = CreateTMPText(panelObj.transform, "GlanceHint", "Tourner le poignet vers soi pour ouvrir • [M] Touche Desktop", ScaleFont(11f), FontStyles.Italic, ScalePos(0f, -158f), ScaleSize(430f, 20f));
             hint.color = new Color(0.45f, 0.55f, 0.65f);
             controller.m_GlanceHintText = hint;
 
             return controller;
         }
 
-        private static (Button, Image, Image, Image, TMP_Text) CreateIconCard(Transform parent, string name, Vector2 pos, Vector2 size, string initialLabel)
+        private static (Button, Image, Image, Image, TMP_Text) CreateIconCard(Transform parent, string name, Vector2 pos, Vector2 size, string initialLabel, float uiScale, float labelFontSize)
         {
             var cardObj = new GameObject(name);
             cardObj.transform.SetParent(parent, false);
@@ -560,11 +877,12 @@ namespace LOG8704.UI
             var iconObj = new GameObject("Icon");
             iconObj.transform.SetParent(cardObj.transform, false);
             var iconRect = iconObj.AddComponent<RectTransform>();
-            iconRect.anchoredPosition = new Vector2(0f, 8f);
-            iconRect.sizeDelta = new Vector2(48f, 48f);
+            iconRect.anchoredPosition = new Vector2(0f, 8f * uiScale);
+            iconRect.sizeDelta = new Vector2(50f, 50f) * uiScale;
 
             var iconImg = iconObj.AddComponent<Image>();
             iconImg.color = Color.white;
+            iconImg.preserveAspect = true;
             iconImg.raycastTarget = false;
 
             // Glowing LED Indicator Dot (Upper Right)
@@ -573,8 +891,8 @@ namespace LOG8704.UI
             var ledRect = ledObj.AddComponent<RectTransform>();
             ledRect.anchorMin = new Vector2(1f, 1f);
             ledRect.anchorMax = new Vector2(1f, 1f);
-            ledRect.anchoredPosition = new Vector2(-10f, -10f);
-            ledRect.sizeDelta = new Vector2(8f, 8f);
+            ledRect.anchoredPosition = new Vector2(-10f, -10f) * uiScale;
+            ledRect.sizeDelta = new Vector2(8f, 8f) * uiScale;
 
             var ledImg = ledObj.AddComponent<Image>();
             ledImg.color = new Color(0.25f, 0.30f, 0.38f, 0.8f);
@@ -584,12 +902,12 @@ namespace LOG8704.UI
             var labelObj = new GameObject("Label");
             labelObj.transform.SetParent(cardObj.transform, false);
             var labelRect = labelObj.AddComponent<RectTransform>();
-            labelRect.anchoredPosition = new Vector2(0f, -28f);
-            labelRect.sizeDelta = new Vector2(130f, 22f);
+            labelRect.anchoredPosition = new Vector2(0f, -28f * uiScale);
+            labelRect.sizeDelta = new Vector2(136f, 24f) * uiScale;
 
             var tmp = labelObj.AddComponent<TextMeshProUGUI>();
             tmp.text = initialLabel;
-            tmp.fontSize = 11;
+            tmp.fontSize = labelFontSize;
             tmp.fontStyle = FontStyles.Bold;
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.color = new Color(0.60f, 0.68f, 0.76f, 0.85f);
@@ -603,6 +921,9 @@ namespace LOG8704.UI
             var go = new GameObject(name);
             go.transform.SetParent(parent, false);
             var rect = go.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
             rect.anchoredPosition = anchoredPos;
             rect.sizeDelta = size;
 
@@ -613,6 +934,46 @@ namespace LOG8704.UI
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.raycastTarget = false;
             return tmp;
+        }
+
+        private static Sprite GetOrCreateRoundedPanelSprite()
+        {
+            if (s_RoundedPanelSprite != null)
+                return s_RoundedPanelSprite;
+
+            const int texSize = 64;
+            const int radius = 10;
+            var tex = new Texture2D(texSize, texSize, TextureFormat.RGBA32, false);
+            tex.wrapMode = TextureWrapMode.Clamp;
+            tex.filterMode = FilterMode.Bilinear;
+
+            Color clear = new Color(1f, 1f, 1f, 0f);
+            Color solid = Color.white;
+            float innerMin = radius;
+            float innerMax = texSize - 1 - radius;
+
+            for (int y = 0; y < texSize; y++)
+            {
+                for (int x = 0; x < texSize; x++)
+                {
+                    bool insideCore = x >= innerMin && x <= innerMax || y >= innerMin && y <= innerMax;
+                    if (insideCore)
+                    {
+                        tex.SetPixel(x, y, solid);
+                        continue;
+                    }
+
+                    float cx = x < innerMin ? innerMin : innerMax;
+                    float cy = y < innerMin ? innerMin : innerMax;
+                    float dx = x - cx;
+                    float dy = y - cy;
+                    tex.SetPixel(x, y, (dx * dx + dy * dy) <= radius * radius ? solid : clear);
+                }
+            }
+
+            tex.Apply();
+            s_RoundedPanelSprite = Sprite.Create(tex, new Rect(0, 0, texSize, texSize), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect, new Vector4(radius, radius, radius, radius));
+            return s_RoundedPanelSprite;
         }
     }
 }

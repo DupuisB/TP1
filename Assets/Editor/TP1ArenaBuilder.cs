@@ -732,13 +732,18 @@ namespace LOG8704.Editor
 
                 var wristController = WristUIController.CreateWristUI(leftController, userPos, userRot);
 
-                // Load custom 256x256 UI icons
-                var walkSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Textures/Icons/icon_walk.png");
-                var teleSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Textures/Icons/icon_teleport.png");
-                var dashSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Textures/Icons/icon_dash.png");
-                var blinkSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Textures/Icons/icon_blink.png");
-                var vigSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Textures/Icons/icon_vignette.png");
-                var turnSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Textures/Icons/icon_turn.png");
+                // Load custom UI icons (prefer newly added files, then fallback to legacy names)
+                var walkSprite = LoadFirstSprite("Assets/Textures/Icons/walk.png");
+
+                var teleSprite = LoadFirstSprite("Assets/Textures/Icons/teleport.png");
+
+                var dashSprite = LoadFirstSprite("Assets/Textures/Icons/sprint.png");
+
+                var blinkSprite = LoadFirstSprite("Assets/Textures/Icons/eye-target.png");
+
+                var vigSprite = LoadFirstSprite("Assets/Textures/Icons/air-zigzag.png");
+
+                var turnSprite = LoadFirstSprite("Assets/Textures/Icons/clockwise-rotation.png");
 
                 wristController.SetSprites(walkSprite, teleSprite, dashSprite, blinkSprite, vigSprite, turnSprite);
 
@@ -755,6 +760,7 @@ namespace LOG8704.Editor
                 var vigProp = soWrist.FindProperty("m_VignetteSprite");
                 if (vigProp != null) vigProp.objectReferenceValue = vigSprite;
                 var turnProp = soWrist.FindProperty("m_TurnSprite");
+                if (turnProp != null) turnProp.objectReferenceValue = turnSprite;
                 var posProp = soWrist.FindProperty("m_UiLocalPosition");
                 if (posProp != null && userPos.HasValue) posProp.vector3Value = userPos.Value;
                 var rotProp = soWrist.FindProperty("m_UiLocalEuler");
@@ -774,6 +780,51 @@ namespace LOG8704.Editor
 
             Debug.Log("[TP1ArenaBuilder] XR Origin Rig configured with CharacterController, ComfortTeleportation, Dash, Vignette, Forearm Wrist UI, and Joystick Mappings.");
             return rigInstance;
+        }
+
+        private static Sprite LoadFirstSprite(params string[] assetPaths)
+        {
+            for (int i = 0; i < assetPaths.Length; i++)
+            {
+                EnsureSpriteImportSettings(assetPaths[i]);
+                var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(assetPaths[i]);
+                if (sprite != null)
+                    return sprite;
+            }
+
+            if (assetPaths != null && assetPaths.Length > 0)
+                Debug.LogWarning($"[TP1ArenaBuilder] Could not load icon sprite. Tried: {string.Join(", ", assetPaths)}");
+
+            return null;
+        }
+
+        private static void EnsureSpriteImportSettings(string assetPath)
+        {
+            var importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+            if (importer == null)
+                return;
+
+            bool changed = false;
+            if (importer.textureType != TextureImporterType.Sprite)
+            {
+                importer.textureType = TextureImporterType.Sprite;
+                changed = true;
+            }
+
+            if (importer.spriteImportMode != SpriteImportMode.Single)
+            {
+                importer.spriteImportMode = SpriteImportMode.Single;
+                changed = true;
+            }
+
+            if (!importer.alphaIsTransparency)
+            {
+                importer.alphaIsTransparency = true;
+                changed = true;
+            }
+
+            if (changed)
+                importer.SaveAndReimport();
         }
 
         private static InputActionReference FindActionReference(string mapName, string actionName)
