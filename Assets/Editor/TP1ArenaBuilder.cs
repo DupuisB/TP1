@@ -118,6 +118,17 @@ namespace LOG8704.Editor
             var socketRingMat = GetOrCreateMaterial("Assets/Materials/M_SocketRing.mat", new Color(0.92f, 0.65f, 0.15f), 0.5f);
             BuildInteractionTestStation(envRoot.transform, pedestalMat, grabMat, socketRingMat);
 
+            // F. Safety floor underneath (strictly BlockedTeleportArea)
+            var safetyFloor = new GameObject("Safety_Teleport_Floor");
+            safetyFloor.transform.SetParent(envRoot.transform, false);
+            safetyFloor.transform.position = new Vector3(0f, -0.05f, 0f);
+            var boxCol = safetyFloor.AddComponent<BoxCollider>();
+            boxCol.size = new Vector3(300f, 0.1f, 300f);
+            boxCol.center = Vector3.zero;
+            var safetyBlocked = safetyFloor.AddComponent<BlockedTeleportArea>();
+            safetyBlocked.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
+            safetyBlocked.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+
             // 7. Setup XR Rig and Locomotion
             var rigInstance = SetupXRRig(scene, preservedWristPos, preservedWristRot);
 
@@ -195,15 +206,25 @@ namespace LOG8704.Editor
                 UnityEngine.Object.DestroyImmediate(area);
             }
 
-            // 4. Configure TeleportationArea on all walkable ground and elevated platforms
+            // 4. Configure TeleportationArea on walkable surfaces and BlockedTeleportArea on red/non-walkable surfaces
             var colliders = UnityEngine.Object.FindObjectsByType<Collider>(FindObjectsSortMode.None);
             int surfaceCount = 0;
+            int blockedCount = 0;
             foreach (var col in colliders)
             {
                 if (col.isTrigger) continue;
 
+                // Never attach teleport interactables to player rig/controllers
+                if (col.GetComponentInParent<Unity.XR.CoreUtils.XROrigin>() != null)
+                    continue;
+
+                // If collider is already used by a non-teleport interactable (e.g. XRGrabInteractable), skip it
+                var existingNonTeleport = col.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.IXRInteractable>();
+                if (existingNonTeleport != null && !(existingNonTeleport is BaseTeleportationInteractable))
+                    continue;
+
                 // If object is red (red.mat), has NoTeleportZone, or is marked to block teleportation:
-                // Ensure TeleportationArea is removed.
+                // Ensure TeleportationArea is removed and BlockedTeleportArea is assigned.
                 if (TP1ComfortManager.IsRedOrBlocked(col))
                 {
                     var existingArea = col.GetComponent<TeleportationArea>();
@@ -211,12 +232,27 @@ namespace LOG8704.Editor
                     {
                         UnityEngine.Object.DestroyImmediate(existingArea);
                     }
+
+                    var blockedArea = col.GetComponent<BlockedTeleportArea>();
+                    if (blockedArea == null)
+                    {
+                        blockedArea = col.gameObject.AddComponent<BlockedTeleportArea>();
+                    }
+                    blockedArea.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
+                    blockedArea.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+                    blockedCount++;
                     continue;
                 }
 
                 // Match walkable ground, floors, platforms, ramps, stairs, modular blocks, crates, roofs, decks
                 if (TP1ComfortManager.IsWalkableSurface(col))
                 {
+                    var existingBlocked = col.GetComponent<BlockedTeleportArea>();
+                    if (existingBlocked != null)
+                    {
+                        UnityEngine.Object.DestroyImmediate(existingBlocked);
+                    }
+
                     var teleArea = col.GetComponent<TeleportationArea>();
                     if (teleArea == null)
                     {
@@ -231,11 +267,21 @@ namespace LOG8704.Editor
                 }
                 else
                 {
+                    // Non-walkable objects (walls, columns, foliage, props) receive BlockedTeleportArea
                     var existingArea = col.GetComponent<TeleportationArea>();
                     if (existingArea != null)
                     {
                         UnityEngine.Object.DestroyImmediate(existingArea);
                     }
+
+                    var blockedArea = col.GetComponent<BlockedTeleportArea>();
+                    if (blockedArea == null)
+                    {
+                        blockedArea = col.gameObject.AddComponent<BlockedTeleportArea>();
+                    }
+                    blockedArea.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
+                    blockedArea.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+                    blockedCount++;
                 }
             }
 
@@ -250,9 +296,9 @@ namespace LOG8704.Editor
                 }
             }
 
-            Debug.Log($"[TP1ArenaBuilder] Configured TeleportationArea on {surfaceCount} valid surfaces (ground, floors, platforms, blocks, crates, ramps). Red surfaces strictly excluded.");
+            Debug.Log($"[TP1ArenaBuilder] Configured TeleportationArea on {surfaceCount} valid surfaces and BlockedTeleportArea on {blockedCount} blocked surfaces (red objects, obstacles, props, walls).");
 
-            // Safety floor underneath to prevent falling into void (strictly NO TeleportationArea)
+            // Safety floor underneath to prevent falling into void (strictly BlockedTeleportArea)
             var safetyFloor = GameObject.Find("Safety_Teleport_Floor");
             if (safetyFloor == null)
             {
@@ -267,6 +313,14 @@ namespace LOG8704.Editor
                 var tele = safetyFloor.GetComponent<TeleportationArea>();
                 if (tele != null) UnityEngine.Object.DestroyImmediate(tele);
             }
+
+            var safetyBlocked = safetyFloor.GetComponent<BlockedTeleportArea>();
+            if (safetyBlocked == null)
+            {
+                safetyBlocked = safetyFloor.AddComponent<BlockedTeleportArea>();
+            }
+            safetyBlocked.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
+            safetyBlocked.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
 
             // 5. Setup XR Rig and Locomotion
             var rigInstance = SetupXRRig(scene, preservedWristPos, preservedWristRot);
@@ -406,8 +460,10 @@ namespace LOG8704.Editor
             if (mat != null)
                 wall.GetComponent<Renderer>().sharedMaterial = mat;
 
-            // Has BoxCollider by default from CreatePrimitive.
-            // Explicitly NO TeleportationArea component!
+            // Attach BlockedTeleportArea so aiming at boundary walls displays the orange line with endpoint and cross reticle
+            var blocked = wall.AddComponent<BlockedTeleportArea>();
+            blocked.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+            blocked.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
         }
 
         private static void BuildObstacleBox(Transform parent, Material sideMat, Material topMat)
@@ -430,7 +486,12 @@ namespace LOG8704.Editor
             if (sideMat != null)
                 box.GetComponent<Renderer>().sharedMaterial = sideMat;
 
-            // Top horizontal surface: Can be aimed at by teleport ray, but REJECTS teleportation (NO TeleportationArea)
+            // Attach BlockedTeleportArea to vertical obstacle body
+            var blockedBody = box.AddComponent<BlockedTeleportArea>();
+            blockedBody.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+            blockedBody.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
+
+            // Top horizontal surface: Can be aimed at by teleport ray, but REJECTS teleportation (BlockedTeleportArea)
             var topSurface = GameObject.CreatePrimitive(PrimitiveType.Cube);
             topSurface.name = "Obstacle_Top_RejectedSurface";
             topSurface.transform.SetParent(obstacleRoot.transform, false);
@@ -440,7 +501,12 @@ namespace LOG8704.Editor
             if (topMat != null)
                 topSurface.GetComponent<Renderer>().sharedMaterial = topMat;
 
-            Debug.Log("[TP1ArenaBuilder] Obstacle Box created with vertical colliders and non-teleportable top surface.");
+            // Attach BlockedTeleportArea to obstacle top so aiming at it shows the cross reticle
+            var blockedTop = topSurface.AddComponent<BlockedTeleportArea>();
+            blockedTop.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+            blockedTop.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
+
+            Debug.Log("[TP1ArenaBuilder] Obstacle Box created with BlockedTeleportArea on vertical body and top surface.");
         }
 
         private static void BuildTeleportPlatformBox(Transform parent, Material sideMat, Material topMat)
@@ -463,6 +529,11 @@ namespace LOG8704.Editor
             if (sideMat != null)
                 body.GetComponent<Renderer>().sharedMaterial = sideMat;
 
+            // Attach BlockedTeleportArea to vertical platform sides so aiming at side shows orange cross
+            var blockedBody = body.AddComponent<BlockedTeleportArea>();
+            blockedBody.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+            blockedBody.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
+
             // Top surface with TeleportationArea (allows valid teleport and dash)
             var topSurface = GameObject.CreatePrimitive(PrimitiveType.Cube);
             topSurface.name = "Platform_Top_TeleportSurface";
@@ -481,7 +552,7 @@ namespace LOG8704.Editor
             teleportArea.filterSelectionByHitNormal = true;
             teleportArea.upNormalToleranceDegrees = 75f;
 
-            Debug.Log("[TP1ArenaBuilder] Teleport Platform Box created with TeleportationArea on top surface.");
+            Debug.Log("[TP1ArenaBuilder] Teleport Platform Box created with TeleportationArea on top surface and BlockedTeleportArea on body.");
         }
 
         private static void BuildInteractionTestStation(Transform parent, Material tableMat, Material cubeMat, Material socketMat)
@@ -499,6 +570,10 @@ namespace LOG8704.Editor
             table.transform.localScale = new Vector3(1.6f, tableHeight, 0.9f);
             if (tableMat != null)
                 table.GetComponent<Renderer>().sharedMaterial = tableMat;
+
+            var blockedPedestal = table.AddComponent<BlockedTeleportArea>();
+            blockedPedestal.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+            blockedPedestal.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
 
             // 2. Grabbable Dynamic Cube (XRGrabInteractable)
             var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -689,6 +764,14 @@ namespace LOG8704.Editor
                 area.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
             }
 
+            var blockedAreas = UnityEngine.Object.FindObjectsByType<BlockedTeleportArea>(FindObjectsSortMode.None);
+            foreach (var blocked in blockedAreas)
+            {
+                blocked.teleportationProvider = comfortTeleport;
+                blocked.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
+                blocked.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+            }
+
             // Locate ContinuousMoveProvider
             var moveProvider = locomotionHost.GetComponentInChildren<ContinuousMoveProvider>(true);
 
@@ -698,6 +781,10 @@ namespace LOG8704.Editor
             {
                 comfortManager = rigInstance.AddComponent<TP1ComfortManager>();
             }
+
+            // Configure teleport ray visuals: Solid Orange blocked line, cross reticle, and endpoint stopping
+            ConfigureTeleportLineVisuals(rigInstance);
+            comfortManager.ConfigureTeleportRayVisuals();
 
             // Setup Left Wrist UI
             Transform leftController = rigInstance.transform.Find("Camera Offset/Left Controller");
@@ -1013,6 +1100,80 @@ namespace LOG8704.Editor
 #pragma warning restore CS0618
 
             Debug.Log("[TP1ArenaBuilder] Joystick assignments configured: Left = Locomotion Only (Move/Teleport/Dash), Right = View Only (Snap/Smooth Turn).");
+        }
+
+        private static void ConfigureTeleportLineVisuals(GameObject rigInstance)
+        {
+            var lineVisuals = rigInstance.GetComponentsInChildren<UnityEngine.XR.Interaction.Toolkit.Interactors.Visuals.XRInteractorLineVisual>(true);
+            var orange = new Color(1.0f, 0.5f, 0.0f, 1.0f);
+            var orangeSemi = new Color(1.0f, 0.5f, 0.0f, 0.8f);
+
+            var blockedGrad = new Gradient();
+            blockedGrad.SetKeys(
+                new GradientColorKey[] { new GradientColorKey(orange, 0f), new GradientColorKey(orange, 1f) },
+                new GradientAlphaKey[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(1f, 1f) }
+            );
+
+            var invalidGrad = new Gradient();
+            invalidGrad.SetKeys(
+                new GradientColorKey[] { new GradientColorKey(orange, 0f), new GradientColorKey(orange, 1f) },
+                new GradientAlphaKey[] { new GradientAlphaKey(0.8f, 0f), new GradientAlphaKey(0.8f, 1f) }
+            );
+
+            const string blockedReticlePath = "Assets/Samples/XR Interaction Toolkit/3.5.1/Starter Assets/Prefabs/Teleport/Blocking Teleport Reticle.prefab";
+            var blockedReticlePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(blockedReticlePath);
+
+            foreach (var lv in lineVisuals)
+            {
+                if (lv.name.Contains("Teleport") || (lv.transform.parent != null && lv.transform.parent.name.Contains("Teleport")))
+                {
+                    var so = new SerializedObject(lv);
+                    so.Update();
+                    var stopHitProp = so.FindProperty("m_StopLineAtFirstRaycastHit");
+                    if (stopHitProp != null) stopHitProp.boolValue = true;
+                    var blockedReticleProp = so.FindProperty("m_BlockedReticle");
+                    if (blockedReticleProp != null && blockedReticlePrefab != null)
+                        blockedReticleProp.objectReferenceValue = blockedReticlePrefab;
+                    so.ApplyModifiedPropertiesWithoutUndo();
+
+                    lv.blockedColorGradient = blockedGrad;
+                    lv.invalidColorGradient = invalidGrad;
+                    lv.stopLineAtFirstRaycastHit = true;
+                    if (blockedReticlePrefab != null)
+                        lv.blockedReticle = blockedReticlePrefab;
+
+                    EditorUtility.SetDirty(lv);
+                }
+            }
+
+            // Remove vertical height/drop limits so player can aim far down from high platforms/roofs to the ground
+            var rayInteractors = rigInstance.GetComponentsInChildren<UnityEngine.XR.Interaction.Toolkit.Interactors.XRRayInteractor>(true);
+            foreach (var ray in rayInteractors)
+            {
+                if (ray.name.Contains("Teleport") || (ray.transform.parent != null && ray.transform.parent.name.Contains("Teleport")))
+                {
+                    var soRay = new SerializedObject(ray);
+                    soRay.Update();
+                    var gndH = soRay.FindProperty("m_AdditionalGroundHeight");
+                    if (gndH != null) gndH.floatValue = 100f;
+                    var fltT = soRay.FindProperty("m_AdditionalFlightTime");
+                    if (fltT != null) fltT.floatValue = 5f;
+                    var maxD = soRay.FindProperty("m_MaxRaycastDistance");
+                    if (maxD != null) maxD.floatValue = 60f;
+                    var endD = soRay.FindProperty("m_EndPointDistance");
+                    if (endD != null) endD.floatValue = 60f;
+                    var endH = soRay.FindProperty("m_EndPointHeight");
+                    if (endH != null) endH.floatValue = -50f;
+                    soRay.ApplyModifiedPropertiesWithoutUndo();
+
+                    ray.additionalGroundHeight = 100f;
+                    ray.additionalFlightTime = 5f;
+                    ray.maxRaycastDistance = 60f;
+                    ray.endPointDistance = 60f;
+                    ray.endPointHeight = -50f;
+                    EditorUtility.SetDirty(ray);
+                }
+            }
         }
 
         private static void SetupEventSystem()
