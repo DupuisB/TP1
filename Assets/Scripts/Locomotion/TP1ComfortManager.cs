@@ -58,7 +58,7 @@ namespace LOG8704.Locomotion
         [SerializeField] private TurnMode m_InitialTurnMode = TurnMode.Snap;
 
         [Header("Desktop Testing Shortcuts")]
-        [Tooltip("Enable keyboard shortcuts (1: Smooth, 2: Teleport, 3: Dash, 4: Blink, 5: Vignette, 6: Turn, Space: Dash, T: Teleport)")]
+        [Tooltip("Enable keyboard shortcuts (1: Smooth, 2: Teleport, 3: Dash, 4: Blink, 5: Vignette, 6: Turn, T: Teleport/Dash)")]
         [SerializeField] private bool m_EnableKeyboardShortcuts = true;
 
         // Current runtime states
@@ -183,45 +183,76 @@ namespace LOG8704.Locomotion
         {
             var lineVisuals = FindObjectsByType<UnityEngine.XR.Interaction.Toolkit.Interactors.Visuals.XRInteractorLineVisual>(FindObjectsSortMode.None);
             var orange = new Color(1.0f, 0.5f, 0.0f, 1.0f);
-            var orangeSemi = new Color(1.0f, 0.5f, 0.0f, 0.65f);
+            var orangeSemi = new Color(1.0f, 0.5f, 0.0f, 0.8f);
+
+            var blockedGrad = new Gradient();
+            blockedGrad.SetKeys(
+                new GradientColorKey[] { new GradientColorKey(orange, 0f), new GradientColorKey(orange, 1f) },
+                new GradientAlphaKey[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(1f, 1f) }
+            );
+
+            var invalidGrad = new Gradient();
+            invalidGrad.SetKeys(
+                new GradientColorKey[] { new GradientColorKey(orange, 0f), new GradientColorKey(orange, 1f) },
+                new GradientAlphaKey[] { new GradientAlphaKey(0.8f, 0f), new GradientAlphaKey(0.8f, 1f) }
+            );
 
             foreach (var lv in lineVisuals)
             {
                 if (lv.name.Contains("Teleport") || (lv.transform.parent != null && lv.transform.parent.name.Contains("Teleport")))
                 {
-                    // Blocked gradient: Solid Orange
-                    var blockedGrad = new Gradient();
-                    blockedGrad.SetKeys(
-                        new GradientColorKey[] { new GradientColorKey(orange, 0f), new GradientColorKey(orange, 1f) },
-                        new GradientAlphaKey[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(1f, 1f) }
-                    );
                     lv.blockedColorGradient = blockedGrad;
-
-                    // Invalid gradient: Semi-transparent Orange
-                    var invalidGrad = new Gradient();
-                    invalidGrad.SetKeys(
-                        new GradientColorKey[] { new GradientColorKey(orange, 0f), new GradientColorKey(orange, 1f) },
-                        new GradientAlphaKey[] { new GradientAlphaKey(0.65f, 0f), new GradientAlphaKey(0.65f, 1f) }
-                    );
                     lv.invalidColorGradient = invalidGrad;
+                    lv.stopLineAtFirstRaycastHit = true;
+                }
+            }
+
+            // Remove vertical height/drop limits so player can aim far down from high platforms/roofs to the ground
+            var rayInteractors = FindObjectsByType<UnityEngine.XR.Interaction.Toolkit.Interactors.XRRayInteractor>(FindObjectsSortMode.None);
+            foreach (var ray in rayInteractors)
+            {
+                if (ray.name.Contains("Teleport") || (ray.transform.parent != null && ray.transform.parent.name.Contains("Teleport")))
+                {
+                    ray.additionalGroundHeight = 100f;
+                    ray.additionalFlightTime = 5f;
+                    ray.maxRaycastDistance = 60f;
+                    ray.endPointDistance = 60f;
+                    ray.endPointHeight = -50f;
                 }
             }
         }
 
         /// <summary>
         /// Ensures walkable ground, floors, platforms, ramps, stairs, modular blocks, and crates
-        /// have active TeleportationArea components, while red surfaces (red.mat) and vertical walls/props are rejected.
+        /// have active TeleportationArea components (with normal filtering so vertical sides block teleport),
+        /// while red surfaces, obstacles, and non-walkable objects receive BlockedTeleportArea
+        /// so aiming at them renders the blocked visual (orange line with endpoint and cross reticle).
         /// </summary>
         public void EnsureAllSurfacesTeleportable()
         {
             var colliders = FindObjectsByType<Collider>(FindObjectsSortMode.None);
-            int count = 0;
+            int walkableCount = 0;
+            int blockedCount = 0;
+
             foreach (var col in colliders)
             {
-                if (col.isTrigger)
+                if (col == null || col.isTrigger)
                     continue;
 
-                // 1. Red surfaces and marked blocked objects must NEVER be teleportable
+                // Never attach teleport interactables to player rig/controllers
+                if (col.GetComponentInParent<Unity.XR.CoreUtils.XROrigin>() != null)
+                    continue;
+
+                // Never overwrite dedicated portal gateways
+                if (col.GetComponentInParent<SceneTeleportPortal>() != null)
+                    continue;
+
+                // If collider is already used by a non-teleport interactable (e.g. XRGrabInteractable), skip it
+                var existingNonTeleport = col.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.IXRInteractable>();
+                if (existingNonTeleport != null && !(existingNonTeleport is BaseTeleportationInteractable))
+                    continue;
+
+                // 1. Red surfaces and marked blocked objects must NEVER be teleportable -> assign BlockedTeleportArea
                 if (IsRedOrBlocked(col))
                 {
                     var existingArea = col.GetComponent<TeleportationArea>();
@@ -230,12 +261,30 @@ namespace LOG8704.Locomotion
                         if (Application.isPlaying) Destroy(existingArea);
                         else DestroyImmediate(existingArea);
                     }
+
+                    var blockedArea = col.GetComponent<BlockedTeleportArea>();
+                    if (blockedArea == null)
+                    {
+                        blockedArea = col.gameObject.AddComponent<BlockedTeleportArea>();
+                    }
+                    blockedArea.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
+                    blockedArea.interactionLayers = unchecked((int)2147483648) | 1 | UnityEngine.XR.Interaction.Toolkit.InteractionLayerMask.GetMask("Teleport");
+                    if (m_TeleportProvider != null)
+                        blockedArea.teleportationProvider = m_TeleportProvider;
+                    blockedCount++;
                     continue;
                 }
 
-                // 2. Only surfaces where teleportation makes sense receive TeleportationArea
+                // 2. Walkable surfaces receive TeleportationArea (normal tolerance 60° blocks vertical sides)
                 if (IsWalkableSurface(col))
                 {
+                    var existingBlocked = col.GetComponent<BlockedTeleportArea>();
+                    if (existingBlocked != null)
+                    {
+                        if (Application.isPlaying) Destroy(existingBlocked);
+                        else DestroyImmediate(existingBlocked);
+                    }
+
                     var area = col.GetComponent<TeleportationArea>();
                     if (area == null)
                     {
@@ -245,45 +294,48 @@ namespace LOG8704.Locomotion
                     area.matchOrientation = MatchOrientation.WorldSpaceUp;
                     area.interactionLayers = unchecked((int)2147483648) | 1 | UnityEngine.XR.Interaction.Toolkit.InteractionLayerMask.GetMask("Teleport");
                     area.filterSelectionByHitNormal = true;
-                    area.upNormalToleranceDegrees = 60f; // Accepts up to 60° slopes/ramps (including 45° ramps and stairs), rejects vertical walls/sides (90°)
+                    area.upNormalToleranceDegrees = 60f; // Accepts up to 60° slopes/ramps, rejects vertical sides (90°)
                     if (m_TeleportProvider != null)
                         area.teleportationProvider = m_TeleportProvider;
-                    count++;
+                    walkableCount++;
                 }
                 else
                 {
-                    // Non-walkable objects (walls, columns, foliage, props) must not have TeleportationArea
+                    // 3. Non-walkable objects (walls, columns, foliage, props, safety floor) receive BlockedTeleportArea
+                    // so aiming at them displays the orange line with endpoint and cross reticle
                     var existingArea = col.GetComponent<TeleportationArea>();
                     if (existingArea != null)
                     {
                         if (Application.isPlaying) Destroy(existingArea);
                         else DestroyImmediate(existingArea);
                     }
+
+                    var blockedArea = col.GetComponent<BlockedTeleportArea>();
+                    if (blockedArea == null)
+                    {
+                        blockedArea = col.gameObject.AddComponent<BlockedTeleportArea>();
+                    }
+                    blockedArea.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
+                    blockedArea.interactionLayers = unchecked((int)2147483648) | 1 | UnityEngine.XR.Interaction.Toolkit.InteractionLayerMask.GetMask("Teleport");
+                    if (m_TeleportProvider != null)
+                        blockedArea.teleportationProvider = m_TeleportProvider;
+                    blockedCount++;
                 }
             }
 
-            // Also cleanup any stray or misconfigured TeleportationArea components in the scene
-            var allAreas = FindObjectsByType<TeleportationArea>(FindObjectsSortMode.None);
-            foreach (var area in allAreas)
+            // Cleanup any stray or misconfigured TeleportationArea components on red or non-walkable objects
+            var allTeleportAreas = FindObjectsByType<TeleportationArea>(FindObjectsSortMode.None);
+            foreach (var area in allTeleportAreas)
             {
                 var col = area.GetComponent<Collider>();
                 if (col == null || IsRedOrBlocked(col) || !IsWalkableSurface(col))
                 {
                     if (Application.isPlaying) Destroy(area);
                     else DestroyImmediate(area);
-                    continue;
                 }
-
-                area.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
-                area.matchOrientation = MatchOrientation.WorldSpaceUp;
-                area.interactionLayers = unchecked((int)2147483648) | 1 | UnityEngine.XR.Interaction.Toolkit.InteractionLayerMask.GetMask("Teleport");
-                area.filterSelectionByHitNormal = true;
-                area.upNormalToleranceDegrees = 60f;
-                if (m_TeleportProvider != null)
-                    area.teleportationProvider = m_TeleportProvider;
             }
 
-            Debug.Log($"[TP1ComfortManager] Configured {count} teleportable surfaces (ground, floors, platforms, blocks, crates, ramps). Red surfaces strictly excluded.");
+            Debug.Log($"[TP1ComfortManager] Configured {walkableCount} teleportable surfaces and {blockedCount} blocked non-teleport surfaces. All non-teleport areas display orange line and cross reticle.");
         }
 
         /// <summary>
@@ -482,11 +534,6 @@ namespace LOG8704.Locomotion
             else if (Keyboard.current.digit6Key.wasPressedThisFrame || Keyboard.current.numpad6Key.wasPressedThisFrame)
             {
                 ToggleTurnMode();
-            }
-            else if (Keyboard.current.spaceKey.wasPressedThisFrame)
-            {
-                if (m_DashProvider != null)
-                    m_DashProvider.TryStartDash();
             }
             else if (Keyboard.current.tKey.wasPressedThisFrame)
             {

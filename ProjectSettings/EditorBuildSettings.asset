@@ -9,6 +9,9 @@ EditorBuildSettings:
     path: Assets/Synty/PolygonStarter/Scenes/Demo.unity
     guid: 5215016c20f88ea498985ac3e0ab4f9d
   - enabled: 1
+    path: "Assets/Synty/PolygonStarter/Scenes/D\xE9but.unity"
+    guid: 2951428daeff1874a85f520ff1620f48
+  - enabled: 0
     path: Assets/Scenes/TP1_TestArena.unity
     guid: 4ca7b982c3aaafc45b15cf08b611fae1
   - enabled: 0
