@@ -30,6 +30,7 @@ namespace LOG8704.Editor
         private const string TargetSceneDir = "Assets/Scenes";
         public const string TargetScenePath = "Assets/Scenes/TP1_TestArena.unity";
         public const string SyntyScenePath = "Assets/Synty/PolygonStarter/Scenes/Demo.unity";
+        public const string DebutScenePath = "Assets/Synty/PolygonStarter/Scenes/Début.unity";
         private const string MaterialsDir = "Assets/Materials";
         private const string XrOriginPrefabPath = "Assets/Samples/XR Interaction Toolkit/3.5.1/Starter Assets/Prefabs/XR Origin (XR Rig).prefab";
         private const string TunnelingVignettePrefabPath = "Assets/Samples/XR Interaction Toolkit/3.5.1/Starter Assets/TunnelingVignette/TunnelingVignette.prefab";
@@ -218,6 +219,10 @@ namespace LOG8704.Editor
                 if (col.GetComponentInParent<Unity.XR.CoreUtils.XROrigin>() != null)
                     continue;
 
+                // Never overwrite dedicated portal gateways
+                if (col.GetComponentInParent<SceneTeleportPortal>() != null)
+                    continue;
+
                 // If collider is already used by a non-teleport interactable (e.g. XRGrabInteractable), skip it
                 var existingNonTeleport = col.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.IXRInteractable>();
                 if (existingNonTeleport != null && !(existingNonTeleport is BaseTeleportationInteractable))
@@ -330,13 +335,29 @@ namespace LOG8704.Editor
                 rigInstance.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
             }
 
-            // 6. Save scene
+            // Remove any old portal instances if present
+            var oldTestArenaPortal = GameObject.Find("Portal_To_TestArena");
+            if (oldTestArenaPortal != null) UnityEngine.Object.DestroyImmediate(oldTestArenaPortal);
+            var oldDebutPortal = GameObject.Find("Portal_To_Debut");
+            if (oldDebutPortal != null) UnityEngine.Object.DestroyImmediate(oldDebutPortal);
+
+            // 6. Setup In-World Portal to Début (cleanly positioned in open area at spawn)
+            CreateScenePortal(
+                "Portal_To_Debut",
+                "Début",
+                new Vector3(-1.2f, 0.05f, 8.0f),
+                Quaternion.Euler(0f, 30f, 0f),
+                new Color(0.1f, 0.75f, 1f, 1f),
+                "TO DEBUT SCENE"
+            );
+
+            // 7. Save scene
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, SyntyScenePath);
             Debug.Log($"[TP1ArenaBuilder] Scene successfully saved to {SyntyScenePath}");
 
-            // 7. Register as Scene 0 in EditorBuildSettings
-            RegisterSceneAsScene0(SyntyScenePath);
+            // 8. Register Demo & Début in EditorBuildSettings
+            UpdateBuildSettingsForDemoAndDebut();
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -1211,6 +1232,250 @@ namespace LOG8704.Editor
             EditorBuildSettings.scenes = scenes.ToArray();
 
             Debug.Log($"[TP1ArenaBuilder] Registered {scenePath} as Scene 0 (enabled) in EditorBuildSettings.");
+        }
+
+        public static void UpdateBuildSettingsForDemoAndDebut()
+        {
+            var scenes = new List<EditorBuildSettingsScene>();
+            scenes.Add(new EditorBuildSettingsScene(SyntyScenePath, true));
+            scenes.Add(new EditorBuildSettingsScene(DebutScenePath, true));
+
+            foreach (var s in EditorBuildSettings.scenes)
+            {
+                if (!s.path.Equals(SyntyScenePath, StringComparison.OrdinalIgnoreCase) &&
+                    !s.path.Equals(DebutScenePath, StringComparison.OrdinalIgnoreCase))
+                {
+                    scenes.Add(new EditorBuildSettingsScene(s.path, false));
+                }
+            }
+            EditorBuildSettings.scenes = scenes.ToArray();
+            Debug.Log("[TP1ArenaBuilder] Configured EditorBuildSettings: Scene 0 = Demo (enabled), Scene 1 = Début (enabled).");
+        }
+
+        [MenuItem("LOG8704/Setup Début Scene for VR")]
+        public static void SetupDebutScene()
+        {
+            Debug.Log($"[TP1ArenaBuilder] Starting VR setup for Début scene ({DebutScenePath})...");
+
+            if (!File.Exists(DebutScenePath))
+            {
+                Debug.LogError($"[TP1ArenaBuilder] Début scene not found at {DebutScenePath}!");
+                return;
+            }
+
+            var scene = EditorSceneManager.OpenScene(DebutScenePath, OpenSceneMode.Single);
+
+            EnsureInteractionManager();
+            SetupEventSystem();
+
+            // Locate XR Rig
+            var rigInstance = UnityEngine.Object.FindFirstObjectByType<XROrigin>();
+            if (rigInstance != null)
+            {
+                var cam = rigInstance.GetComponentInChildren<Camera>(true);
+                if (cam != null)
+                {
+                    var fade = ScreenFadeCanvas.CreateOnCamera(cam);
+                    var comfortTeleport = rigInstance.GetComponentInChildren<ComfortTeleportationProvider>(true);
+                    if (comfortTeleport != null)
+                    {
+                        comfortTeleport.screenFade = fade;
+                    }
+                }
+
+                // Ensure ray interactors have extended vertical range
+                var rays = rigInstance.GetComponentsInChildren<XRRayInteractor>(true);
+                foreach (var ray in rays)
+                {
+                    ray.additionalGroundHeight = 100f;
+                    ray.additionalFlightTime = 5f;
+                    ray.maxRaycastDistance = 60f;
+                    ray.endPointHeight = -50f;
+                }
+            }
+
+            // Remove any old portal instances
+            var oldDemoPortal = GameObject.Find("Portal_To_Demo");
+            if (oldDemoPortal != null) UnityEngine.Object.DestroyImmediate(oldDemoPortal);
+            var oldTestArenaPortal = GameObject.Find("Portal_To_TestArena");
+            if (oldTestArenaPortal != null) UnityEngine.Object.DestroyImmediate(oldTestArenaPortal);
+
+            // Setup In-World Portal to Demo scene near spawn (-7.5, 2.0, 90)
+            CreateScenePortal(
+                "Portal_To_Demo",
+                "Demo",
+                new Vector3(-5.5f, 0.05f, 87.5f),
+                Quaternion.Euler(0f, -38f, 0f),
+                new Color(0.95f, 0.55f, 0.1f, 1f),
+                "TO DEMO SCENE"
+            );
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene, DebutScenePath);
+            Debug.Log($"[TP1ArenaBuilder] Début scene successfully saved with portal to Demo.");
+
+            UpdateBuildSettingsForDemoAndDebut();
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
+
+        private static GameObject CreateScenePortal(
+            string portalName,
+            string targetSceneName,
+            Vector3 position,
+            Quaternion rotation,
+            Color curtainColor,
+            string signText)
+        {
+            var portalRoot = new GameObject(portalName);
+            portalRoot.transform.position = position;
+            portalRoot.transform.rotation = rotation;
+
+            // 1. Archway Frame (Synty Polygon)
+            // The mesh bounds start at x=0 with inner opening width 1.00m centered at x=0.654m and z=0.086m.
+            // Shifting by (-0.654, 0, -0.086) centers the doorway opening exactly at (0, 0, 0).
+            const string doorFramePrefabPath = "Assets/Synty/PolygonStarter/Prefabs/SM_PolygonPrototype_Buildings_DoorFrame_01P.prefab";
+            var doorFramePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(doorFramePrefabPath);
+            if (doorFramePrefab != null)
+            {
+                var frame = (GameObject)PrefabUtility.InstantiatePrefab(doorFramePrefab, portalRoot.transform);
+                frame.name = "Arch_Frame";
+                frame.transform.localPosition = new Vector3(-0.654f, 0f, -0.086f);
+                frame.transform.localRotation = Quaternion.identity;
+            }
+
+            var padMat = GetOrCreateMaterial("Assets/Materials/M_ArenaPedestal.mat", new Color(0.12f, 0.14f, 0.18f), 0.5f);
+
+            // 2. Flat Teleport Pad on the ground
+            // Replace default Cylinder CapsuleCollider (which forces a 1.6m tall dome blocking running players)
+            // with a flat BoxCollider so players can run smoothly across the pad.
+            var pad = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            pad.name = "Portal_Pad";
+            pad.transform.SetParent(portalRoot.transform, false);
+            pad.transform.localPosition = new Vector3(0f, 0.012f, 0f);
+            pad.transform.localScale = new Vector3(1.6f, 0.015f, 1.6f);
+            pad.GetComponent<MeshRenderer>().sharedMaterial = padMat;
+
+            var defaultCapsule = pad.GetComponent<Collider>();
+            if (defaultCapsule != null) UnityEngine.Object.DestroyImmediate(defaultCapsule);
+
+            var padBoxCol = pad.AddComponent<BoxCollider>();
+            padBoxCol.size = new Vector3(1.0f, 1.0f, 1.0f);
+            padBoxCol.center = Vector3.zero;
+
+            // 3. Smooth Ramps (Front & Back) so players can run onto the socle without jumping
+            var rampFront = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            rampFront.name = "Portal_Ramp_Front";
+            rampFront.transform.SetParent(portalRoot.transform, false);
+            rampFront.transform.localPosition = new Vector3(0f, 0.012f, -0.85f);
+            rampFront.transform.localRotation = Quaternion.Euler(-3.5f, 0f, 0f);
+            rampFront.transform.localScale = new Vector3(1.3f, 0.024f, 0.45f);
+            rampFront.GetComponent<Renderer>().sharedMaterial = padMat;
+
+            var rampBack = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            rampBack.name = "Portal_Ramp_Back";
+            rampBack.transform.SetParent(portalRoot.transform, false);
+            rampBack.transform.localPosition = new Vector3(0f, 0.012f, 0.85f);
+            rampBack.transform.localRotation = Quaternion.Euler(3.5f, 0f, 0f);
+            rampBack.transform.localScale = new Vector3(1.3f, 0.024f, 0.45f);
+            rampBack.GetComponent<Renderer>().sharedMaterial = padMat;
+
+            // 4. Walk-Through Trigger BoxCollider matching inner door opening (1.00m x 2.10m)
+            var triggerGo = new GameObject("Walk_Trigger");
+            triggerGo.transform.SetParent(portalRoot.transform, false);
+            triggerGo.transform.localPosition = new Vector3(0f, 1.05f, 0f);
+            var triggerCol = triggerGo.AddComponent<BoxCollider>();
+            triggerCol.isTrigger = true;
+            triggerCol.size = new Vector3(1.0f, 2.1f, 0.8f);
+
+            // 5. Glowing Energy Curtain snuggly fitted into inner door opening
+            var curtain = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            curtain.name = "Portal_Curtain";
+            curtain.transform.SetParent(portalRoot.transform, false);
+            curtain.transform.localPosition = new Vector3(0f, 1.05f, 0f);
+            curtain.transform.localScale = new Vector3(1.0f, 2.1f, 1f);
+            UnityEngine.Object.DestroyImmediate(curtain.GetComponent<Collider>());
+
+            string matPath = $"Assets/Materials/M_PortalCurtain_{targetSceneName}.mat";
+            var curtainMat = GetOrCreatePortalMaterial(matPath, curtainColor);
+            var curtainRenderer = curtain.GetComponent<MeshRenderer>();
+            curtainRenderer.sharedMaterial = curtainMat;
+
+            // 6. Floating 3D Text Header right above lintel
+            var signGo = new GameObject("Portal_Sign");
+            signGo.transform.SetParent(portalRoot.transform, false);
+            signGo.transform.localPosition = new Vector3(0f, 2.45f, 0f);
+            var tmp = signGo.AddComponent<TextMeshPro>();
+            tmp.text = signText;
+            tmp.fontSize = 3.2f;
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.color = curtainColor;
+            tmp.rectTransform.sizeDelta = new Vector2(4f, 1f);
+
+            // 7. SceneTeleportPortal component
+            var portal = portalRoot.AddComponent<SceneTeleportPortal>();
+            var so = new SerializedObject(portal);
+            so.Update();
+
+            var targetSceneProp = so.FindProperty("m_TargetSceneName");
+            if (targetSceneProp != null) targetSceneProp.stringValue = targetSceneName;
+
+            var curtainRendererProp = so.FindProperty("m_CurtainRenderer");
+            if (curtainRendererProp != null) curtainRendererProp.objectReferenceValue = curtainRenderer;
+
+            var curtainColorProp = so.FindProperty("m_CurtainColor");
+            if (curtainColorProp != null) curtainColorProp.colorValue = curtainColor;
+
+            var triggerProp = so.FindProperty("m_TeleportTrigger");
+            if (triggerProp != null) triggerProp.intValue = 0; // OnSelectExited
+
+            var layersProp = so.FindProperty("m_InteractionLayers.m_Bits");
+            if (layersProp != null) layersProp.longValue = 2147483649L;
+
+            var colProp = so.FindProperty("m_Colliders");
+            if (colProp != null)
+            {
+                colProp.arraySize = 4;
+                colProp.GetArrayElementAtIndex(0).objectReferenceValue = padBoxCol;
+                colProp.GetArrayElementAtIndex(1).objectReferenceValue = rampFront.GetComponent<Collider>();
+                colProp.GetArrayElementAtIndex(2).objectReferenceValue = rampBack.GetComponent<Collider>();
+                colProp.GetArrayElementAtIndex(3).objectReferenceValue = triggerCol;
+            }
+
+            so.ApplyModifiedProperties();
+
+            return portalRoot;
+        }
+
+        private static Material GetOrCreatePortalMaterial(string path, Color emissionColor)
+        {
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (mat == null)
+            {
+                var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+                mat = new Material(shader);
+                AssetDatabase.CreateAsset(mat, path);
+            }
+
+            mat.color = new Color(emissionColor.r, emissionColor.g, emissionColor.b, 0.45f);
+            if (mat.HasProperty("_BaseColor"))
+                mat.SetColor("_BaseColor", new Color(emissionColor.r, emissionColor.g, emissionColor.b, 0.45f));
+
+            if (mat.HasProperty("_EmissionColor"))
+            {
+                mat.EnableKeyword("_EMISSION");
+                mat.SetColor("_EmissionColor", emissionColor * 1.8f);
+            }
+
+            if (mat.HasProperty("_Surface")) mat.SetFloat("_Surface", 1f); // Transparent
+            if (mat.HasProperty("_Blend")) mat.SetFloat("_Blend", 0f); // Alpha blend
+            if (mat.HasProperty("_Cull")) mat.SetFloat("_Cull", 0f); // Double-sided
+            if (mat.HasProperty("_ZWrite")) mat.SetFloat("_ZWrite", 0f);
+            mat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+
+            EditorUtility.SetDirty(mat);
+            return mat;
         }
     }
 }

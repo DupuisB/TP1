@@ -243,6 +243,10 @@ namespace LOG8704.Locomotion
                 if (col.GetComponentInParent<Unity.XR.CoreUtils.XROrigin>() != null)
                     continue;
 
+                // Never overwrite dedicated portal gateways
+                if (col.GetComponentInParent<SceneTeleportPortal>() != null)
+                    continue;
+
                 // If collider is already used by a non-teleport interactable (e.g. XRGrabInteractable), skip it
                 var existingNonTeleport = col.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.IXRInteractable>();
                 if (existingNonTeleport != null && !(existingNonTeleport is BaseTeleportationInteractable))
