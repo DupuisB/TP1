@@ -1,19 +1,11 @@
 using System;
+using LOG8704.Locomotion;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using LOG8704.Locomotion;
 
 namespace LOG8704.UI
 {
-    /// <summary>
-    /// Coordinates the interactive 5-step VR locomotion tutorial in the Début scene:
-    /// Step 1: Open Wrist Menu (glance wrist or [M])
-    /// Step 2: Teleport + Blink (aim & release ray on highlighted target pad)
-    /// Step 3: Rapid Dash (0.2s linear translation)
-    /// Step 4: Smooth Move + Tunneling Vignette (walk with joystick while vignette occludes peripheral vision)
-    /// Step 5: Portal Unlocked (portal opens to transition to Demo scene)
-    /// </summary>
     public class TutorialFlowController : MonoBehaviour
     {
         public enum Step
@@ -66,9 +58,7 @@ namespace LOG8704.UI
         private void Update()
         {
             if (!m_WristButtonsHooked)
-            {
                 TryWireWristButtons();
-            }
 
             TrackLocomotionStepProgress();
         }
@@ -77,27 +67,20 @@ namespace LOG8704.UI
         {
             var mgr = TP1ComfortManager.Instance;
             if (mgr != null)
-            {
                 mgr.onLocomotionModeChanged -= OnLocomotionModeChanged;
-            }
         }
 
         public void FindSceneReferencesIfNeeded()
         {
             if (m_ExitPortal == null)
-            {
                 m_ExitPortal = FindFirstObjectByType<SceneTeleportPortal>();
-            }
 
             if (m_TeleportTargetZone == null)
-            {
                 m_TeleportTargetZone = GameObject.Find("Tutorial_Target_Zone") ?? GameObject.Find("TutorialTeleportZone");
-            }
 
             if (m_TeleportTargetZone != null)
             {
-                var trigger = m_TeleportTargetZone.GetComponent<TutorialTeleportZoneTrigger>();
-                if (trigger == null) trigger = m_TeleportTargetZone.AddComponent<TutorialTeleportZoneTrigger>();
+                var trigger = m_TeleportTargetZone.GetComponent<TutorialTeleportZoneTrigger>() ?? m_TeleportTargetZone.AddComponent<TutorialTeleportZoneTrigger>();
                 trigger.SetController(this);
             }
 
@@ -109,10 +92,7 @@ namespace LOG8704.UI
             }
         }
 
-        public void SkipTutorial()
-        {
-            SetStep(Step.PortalUnlocked);
-        }
+        public void SkipTutorial() => SetStep(Step.PortalUnlocked);
 
         public void RestartTutorial()
         {
@@ -123,88 +103,95 @@ namespace LOG8704.UI
         public void OnAnyWristButtonPressed()
         {
             if (m_CurrentStep == Step.OpenWristMenu)
-            {
                 SetStep(Step.TeleportWithBlink);
-            }
         }
 
         public void OnTeleportZoneEntered()
         {
             if (m_CurrentStep == Step.TeleportWithBlink)
-            {
                 SetStep(Step.PerformDash);
-            }
         }
 
         private void OnLocomotionModeChanged(TP1ComfortManager.LocomotionMode mode)
         {
             if (m_CurrentStep == Step.OpenWristMenu)
-            {
                 SetStep(Step.TeleportWithBlink);
-            }
         }
 
         private void TrackLocomotionStepProgress()
         {
-            // Track Step 1: Open Wrist Menu (glance wrist or [M])
-            if (m_CurrentStep == Step.OpenWristMenu)
+            switch (m_CurrentStep)
             {
-                var wrist = FindFirstObjectByType<WristUIController>();
-                if (wrist != null && wrist.isMenuVisible)
-                {
-                    SetStep(Step.TeleportWithBlink);
-                    return;
-                }
+                case Step.OpenWristMenu:
+                    EvaluateWristStep();
+                    break;
+                case Step.TeleportWithBlink:
+                    EvaluateTeleportStep();
+                    break;
+                case Step.PerformDash:
+                    EvaluateDashStep();
+                    break;
+                case Step.SmoothMoveWithVignette:
+                    EvaluateWalkStep();
+                    break;
             }
+        }
 
+        private void EvaluateWristStep()
+        {
+            var wrist = FindFirstObjectByType<WristUIController>();
+            if (wrist != null && wrist.isMenuVisible)
+                SetStep(Step.TeleportWithBlink);
+        }
+
+        private void EvaluateTeleportStep()
+        {
+            // Transition evaluated reactively via OnTeleportZoneEntered callback
+        }
+
+        private void EvaluateDashStep()
+        {
             var mgr = TP1ComfortManager.Instance;
-            if (mgr == null) return;
+            if (mgr == null || mgr.dashProvider == null) return;
 
-            // Track Step 2 -> Step 3: Dash detection
-            if (m_CurrentStep == Step.PerformDash)
+            bool isDashingNow = mgr.dashProvider.isDashing;
+            if (isDashingNow && !m_WasDashing)
             {
-                bool isDashingNow = mgr.dashProvider != null && mgr.dashProvider.isDashing;
-                if (isDashingNow && !m_WasDashing)
-                {
-                    m_WasDashing = true;
-                }
-                else if (!isDashingNow && m_WasDashing)
-                {
-                    m_WasDashing = false;
-                    SetStep(Step.SmoothMoveWithVignette);
-                    return;
-                }
+                m_WasDashing = true;
+            }
+            else if (!isDashingNow && m_WasDashing)
+            {
+                m_WasDashing = false;
+                SetStep(Step.SmoothMoveWithVignette);
+            }
+        }
+
+        private void EvaluateWalkStep()
+        {
+            var mgr = TP1ComfortManager.Instance;
+            if (mgr == null || !mgr.isSmoothMoveActive) return;
+
+            var cam = Camera.main;
+            if (cam == null) return;
+
+            if (m_LastPlayerPosition == Vector3.zero)
+            {
+                m_LastPlayerPosition = cam.transform.position;
+                return;
             }
 
-            // Track Step 3 -> Step 4: Smooth Walk detection
-            if (m_CurrentStep == Step.SmoothMoveWithVignette)
+            Vector3 currentPos = cam.transform.position;
+            float frameDist = Vector2.Distance(new Vector2(currentPos.x, currentPos.z), new Vector2(m_LastPlayerPosition.x, m_LastPlayerPosition.z));
+            m_LastPlayerPosition = currentPos;
+
+            if (frameDist > 0.005f)
             {
-                var cam = Camera.main;
-                if (cam != null)
-                {
-                    if (m_LastPlayerPosition == Vector3.zero)
-                    {
-                        m_LastPlayerPosition = cam.transform.position;
-                    }
+                m_SmoothMoveAccumulatedDistance += frameDist;
+                if (m_StepProgressText != null)
+                    m_StepProgressText.text = $"Distance: {Mathf.Min(3.0f, m_SmoothMoveAccumulatedDistance):F1} / 3.0 m";
 
-                    Vector3 currentPos = cam.transform.position;
-                    float frameDist = Vector2.Distance(new Vector2(currentPos.x, currentPos.z), new Vector2(m_LastPlayerPosition.x, m_LastPlayerPosition.z));
-                    m_LastPlayerPosition = currentPos;
-
-                    if (mgr.isSmoothMoveActive && frameDist > 0.005f)
-                    {
-                        m_SmoothMoveAccumulatedDistance += frameDist;
-                        if (m_StepProgressText != null)
-                        {
-                            m_StepProgressText.text = $"Distance: {Mathf.Min(3.0f, m_SmoothMoveAccumulatedDistance):F1} / 3.0 m";
-                        }
-
-                        if (m_SmoothMoveAccumulatedDistance >= 3.0f)
-                        {
-                            SetStep(Step.PortalUnlocked);
-                        }
-                    }
-                }
+                if (m_SmoothMoveAccumulatedDistance >= 3.0f)
+                    SetStep(Step.PortalUnlocked);
             }
         }
 
@@ -218,7 +205,7 @@ namespace LOG8704.UI
                     UpdateDisplay(
                         "ÉTAPE 1 / 4",
                         "MENU DE POIGNET (SMARTWATCH)",
-                        "Tournez votre poignet gauche vers vos yeux (ou appuyez sur la touche [M] sur Desktop) pour ouvrir l'interface holographique. Appuyez sur n'importe quel bouton pour continuer.",
+                        "Tournez votre poignet gauche vers vos yeux (ou appuyez sur la touche [M] sur Desktop) pour ouvrir l'interface. Appuyez sur n'importe quel bouton pour continuer.",
                         "En attente du menu..."
                     );
                     if (m_TeleportTargetZone != null) m_TeleportTargetZone.SetActive(false);
@@ -229,8 +216,8 @@ namespace LOG8704.UI
                     UpdateDisplay(
                         "ÉTAPE 2 / 4",
                         "TÉLÉPORTATION & TRANSITION BLINK",
-                        "Sur le menu du poignet, activez TÉLÉPORT (et assurez-vous que BLINK est actif). Poussez le joystick gauche vers l'avant pour viser le socle cible bleu au sol, puis relâchez pour vous y téléporter instantanément avec un fondu au noir.",
-                        "Visez le socle lumineux"
+                        "Sur le menu du poignet, activez TÉLÉPORT (et assurez-vous que BLINK est actif). Poussez le joystick gauche vers l'avant pour viser la cible bleu au sol, puis relâchez pour vous y téléporter.",
+                        "Visez la cible lumineuse"
                     );
                     if (m_TeleportTargetZone != null) m_TeleportTargetZone.SetActive(true);
                     GatePortal(true);
@@ -239,9 +226,9 @@ namespace LOG8704.UI
                 case Step.PerformDash:
                     UpdateDisplay(
                         "ÉTAPE 3 / 4",
-                        "TRANSLATION RAPIDE (DASH)",
-                        "Activez le mode DASH sur le menu du poignet (ou appuyez sur [Espace] sur Desktop / gâchette) pour effectuer un dash fluide de 0.20s dans votre direction de regard.",
-                        "Effectuez 1 Dash"
+                        "DASH",
+                        "Activez le mode DASH sur le menu du poignet (ou appuyez sur [Espace] sur Desktop / gâchette) pour vous téléporter en mode dash.",
+                        "Effectuez un Dash"
                     );
                     if (m_TeleportTargetZone != null) m_TeleportTargetZone.SetActive(false);
                     GatePortal(true);
@@ -250,8 +237,8 @@ namespace LOG8704.UI
                 case Step.SmoothMoveWithVignette:
                     UpdateDisplay(
                         "ÉTAPE 4 / 4",
-                        "DÉPLACEMENT CONTINU & ŒILLÈRE",
-                        "Activez CONTINU sur le menu. Déplacez-vous avec le joystick gauche (ou ZQSD sur Desktop) sur 3 mètres. Observez l'œillère de protection (Tunneling Vignette) qui réduit dynamiquement le champ de vision pour prévenir la cinétose.",
+                        "DÉPLACEMENT CONTINU & VIGNETTE",
+                        "Activez CONTINU sur le menu. Déplacez-vous avec le joystick gauche (ou ZQSD sur Desktop) sur 3 mètres. Observez la vignette qui réduit le champ de vision pour prévenir la cinétose.",
                         "Distance: 0.0 / 3.0 m"
                     );
                     m_SmoothMoveAccumulatedDistance = 0f;
@@ -261,8 +248,8 @@ namespace LOG8704.UI
                 case Step.PortalUnlocked:
                     UpdateDisplay(
                         "COMPLÉTÉ !",
-                        "TUTORIEL TERMINÉ - PORTAIL DÉVERROUILLÉ",
-                        "Félicitations ! Vous maîtrisez les 3 modes de locomotion et les options de confort VR. Le portail d'exploration vers la ville est maintenant grand ouvert. Avancez ou téléportez-vous dans le portail pour continuer.",
+                        "TUTORIEL TERMINÉ",
+                        "Vous pouvez maintenant explorer la ville en passant dans le portail.",
                         "Prêt pour l'exploration !"
                     );
                     GatePortal(false);
@@ -292,46 +279,30 @@ namespace LOG8704.UI
         private void SetCheckItem(TMP_Text item, bool done, string label)
         {
             if (item == null) return;
-            if (done)
-            {
-                item.text = $"<color=#38ef7d>✔ <b>{label}</b></color>";
-            }
-            else
-            {
-                item.text = $"<color=#94a3b8>○ {label}</color>";
-            }
+            item.text = done ? $"<color=#38ef7d>✔ <b>{label}</b></color>" : $"<color=#94a3b8>○ {label}</color>";
         }
 
         public void GatePortal(bool locked)
         {
             if (m_ExitPortal == null)
-            {
                 m_ExitPortal = FindFirstObjectByType<SceneTeleportPortal>();
-            }
 
             if (m_ExitPortal != null)
             {
                 m_ExitPortal.enabled = !locked;
 
-                // Color & emission feedback on portal energy curtain
                 if (m_ExitPortal.curtainRenderer != null)
                 {
-                    Color lockedColor = new Color(0.95f, 0.25f, 0.1f, 1.0f); // Warm warning red/orange
-                    Color unlockedColor = new Color(0.2f, 0.95f, 0.5f, 1.0f); // Bright emerald open gateway
+                    Color lockedColor = new Color(0.95f, 0.25f, 0.1f, 1.0f);
+                    Color unlockedColor = new Color(0.2f, 0.95f, 0.5f, 1.0f);
                     m_ExitPortal.curtainColor = locked ? lockedColor : unlockedColor;
                 }
 
-                // Billboard status above portal
                 if (m_PortalStatusBillboard != null)
                 {
-                    if (locked)
-                    {
-                        m_PortalStatusBillboard.text = "<color=#f87171><b>PORTAIL VERROUILLÉ</b></color>\n<size=70%>Complétez le tutoriel pour continuer</size>";
-                    }
-                    else
-                    {
-                        m_PortalStatusBillboard.text = "<color=#38ef7d><b>PORTAIL DÉVERROUILLÉ</b></color>\n<size=70%>Entrez pour explorer la ville !</size>";
-                    }
+                    m_PortalStatusBillboard.text = locked
+                        ? "<color=#f87171><b>PORTAIL VERROUILLÉ</b></color>\n<size=70%>Complétez le tutoriel pour continuer</size>"
+                        : "<color=#38ef7d><b>PORTAIL DÉVERROUILLÉ</b></color>\n<size=70%>Entrez pour explorer la ville !</size>";
                 }
             }
         }
@@ -368,15 +339,9 @@ namespace LOG8704.UI
                 }
             }
 
-            if (anyHooked)
-            {
-                m_WristButtonsHooked = true;
-            }
+            if (anyHooked) m_WristButtonsHooked = true;
         }
 
-        /// <summary>
-        /// Procedural generator to construct the World-Space Tutorial Display Station in the Début scene.
-        /// </summary>
         public static TutorialFlowController CreateTutorialBoard(Transform parent, Vector3 position, Quaternion rotation)
         {
             var root = new GameObject("Tutorial_Board_Station");
@@ -391,9 +356,8 @@ namespace LOG8704.UI
             rect.sizeDelta = new Vector2(1000f, 650f);
 
             root.AddComponent<GraphicRaycaster>();
-            root.AddComponent<UnityEngine.XR.Interaction.Toolkit.UI.TrackedDeviceGraphicRaycaster>();
+            root.AddComponent<TrackedDeviceGraphicRaycaster>();
 
-            // Dark Obsidian Backing Board
             var panelObj = new GameObject("BackgroundBoard");
             panelObj.transform.SetParent(root.transform, false);
             var panelRect = panelObj.AddComponent<RectTransform>();
@@ -406,32 +370,26 @@ namespace LOG8704.UI
 
             var controller = root.AddComponent<TutorialFlowController>();
 
-            // Header Banner
             var banner = CreateText(panelObj.transform, "HeaderBanner", "LOG8704 • CENTRE D'ENTRAÎNEMENT VR", 24f, FontStyles.Bold, new Vector2(0f, 280f), new Vector2(920f, 40f));
-            banner.color = new Color(0.22f, 0.94f, 0.49f); // Neon Emerald
+            banner.color = new Color(0.22f, 0.94f, 0.49f);
 
-            // Step Badge
             var stepBadge = CreateText(panelObj.transform, "StepBadge", "ÉTAPE 1 / 4", 20f, FontStyles.Bold, new Vector2(-330f, 230f), new Vector2(260f, 34f));
-            stepBadge.color = new Color(0.96f, 0.62f, 0.04f); // Warm Amber
+            stepBadge.color = new Color(0.96f, 0.62f, 0.04f);
             controller.m_StepNumberText = stepBadge;
 
-            // Step Title
             var stepTitle = CreateText(panelObj.transform, "StepTitle", "MENU DE POIGNET (SMARTWATCH)", 28f, FontStyles.Bold, new Vector2(0f, 185f), new Vector2(920f, 45f));
             stepTitle.color = Color.white;
             controller.m_StepTitleText = stepTitle;
 
-            // Step Instructions Box
             var instruction = CreateText(panelObj.transform, "StepInstruction", "Instructions du tutoriel...", 22f, FontStyles.Normal, new Vector2(0f, 90f), new Vector2(900f, 120f));
             instruction.color = new Color(0.85f, 0.90f, 0.95f);
             instruction.textWrappingMode = TextWrappingModes.Normal;
             controller.m_StepInstructionText = instruction;
 
-            // Step Progress
             var progress = CreateText(panelObj.transform, "StepProgress", "En attente...", 20f, FontStyles.Italic, new Vector2(0f, 5f), new Vector2(900f, 32f));
             progress.color = new Color(0.45f, 0.85f, 1.0f);
             controller.m_StepProgressText = progress;
 
-            // Divider Line
             var div = new GameObject("Divider");
             div.transform.SetParent(panelObj.transform, false);
             var divRect = div.AddComponent<RectTransform>();
@@ -440,17 +398,14 @@ namespace LOG8704.UI
             var divImg = div.AddComponent<Image>();
             divImg.color = new Color(0.20f, 0.25f, 0.35f, 0.8f);
 
-            // Checklist Header
             var checkHeader = CreateText(panelObj.transform, "ChecklistHeader", "PROGRESSION DE L'ENTRAÎNEMENT :", 18f, FontStyles.Bold, new Vector2(-260f, -55f), new Vector2(400f, 30f));
             checkHeader.color = new Color(0.60f, 0.70f, 0.85f);
 
-            // 4 Checklist Items
             controller.m_CheckWristText = CreateText(panelObj.transform, "Check1", "○ 1. Menu de Poignet", 18f, FontStyles.Normal, new Vector2(-260f, -90f), new Vector2(400f, 26f));
             controller.m_CheckTeleportText = CreateText(panelObj.transform, "Check2", "○ 2. Téléportation & Blink", 18f, FontStyles.Normal, new Vector2(-260f, -120f), new Vector2(400f, 26f));
             controller.m_CheckDashText = CreateText(panelObj.transform, "Check3", "○ 3. Translation Dash (0.2s)", 18f, FontStyles.Normal, new Vector2(-260f, -150f), new Vector2(400f, 26f));
             controller.m_CheckWalkText = CreateText(panelObj.transform, "Check4", "○ 4. Déplacement Continu & Œillère", 18f, FontStyles.Normal, new Vector2(-260f, -180f), new Vector2(400f, 26f));
 
-            // Controls Tip Box (Right Column)
             var tipTitle = CreateText(panelObj.transform, "TipTitle", "RACCOURCIS CLAVIER / DESKTOP :", 18f, FontStyles.Bold, new Vector2(230f, -55f), new Vector2(420f, 30f));
             tipTitle.color = new Color(0.60f, 0.70f, 0.85f);
 
@@ -463,7 +418,6 @@ namespace LOG8704.UI
             tipContent.color = new Color(0.70f, 0.78f, 0.88f);
             tipContent.textWrappingMode = TextWrappingModes.Normal;
 
-            // Skip Button (Bottom Right)
             var skipObj = new GameObject("SkipButton");
             skipObj.transform.SetParent(panelObj.transform, false);
             var skipRect = skipObj.AddComponent<RectTransform>();
