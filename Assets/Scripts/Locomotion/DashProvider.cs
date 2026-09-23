@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,11 +9,6 @@ using Unity.XR.CoreUtils;
 
 namespace LOG8704.Locomotion
 {
-    /// <summary>
-    /// Custom LocomotionProvider for rapid directional translation (Dashing).
-    /// Inherits from LocomotionProvider and implements ITunnelingVignetteProvider for VR comfort.
-    /// Supports obstacle collision stopping, elevation clearance arcs for platforms, and haptic feedback.
-    /// </summary>
     [AddComponentMenu("LOG8704/Locomotion/Dash Provider")]
     public class DashProvider : LocomotionProvider, ITunnelingVignetteProvider
     {
@@ -70,15 +66,12 @@ namespace LOG8704.Locomotion
         {
             base.Awake();
             if (m_VignetteController == null)
-            {
                 m_VignetteController = FindFirstObjectByType<TunnelingVignetteController>();
-            }
         }
 
         protected override void OnDisable()
         {
             base.OnDisable();
-
             if (m_DashCoroutine != null)
             {
                 StopCoroutine(m_DashCoroutine);
@@ -90,59 +83,26 @@ namespace LOG8704.Locomotion
             }
         }
 
-        /// <summary>
-        /// Dash directly to a target destination (e.g. from teleport ray) over 0.20s.
-        /// Evaluates obstacle collisions along the path, smoothly navigates platforms and height changes,
-        /// and provides haptic and visual comfort feedback.
-        /// </summary>
-        public bool DashTo(Vector3 targetPosition, Quaternion? targetRotation = null, System.Action onComplete = null)
+        public bool DashTo(Vector3 targetPosition, Quaternion? targetRotation = null, Action onComplete = null)
         {
-            if (m_IsDashing)
-                return false;
-
-            if (Time.time < m_LastDashTime + m_Cooldown)
+            if (m_IsDashing || Time.time < m_LastDashTime + m_Cooldown)
                 return false;
 
             XROrigin origin = GetXROrigin();
-            if (origin == null || origin.Origin == null)
+            if (origin == null || origin.Origin == null || !TryStartLocomotionImmediately())
                 return false;
 
-            if (!TryStartLocomotionImmediately())
-                return false;
-
-            // 1. Calculate destination origin position compensating for room-scale head offset
+            // Compensate for room-scale head offset from tracking origin
             Vector3 originPos = origin.Origin.transform.position;
             Vector3 headPos = origin.Camera != null ? origin.Camera.transform.position : originPos + Vector3.up * m_PlayerHeight;
             float actualPlayerHeight = Mathf.Max(1.0f, headPos.y - originPos.y);
             Vector3 playerGroundPos = new Vector3(headPos.x, originPos.y, headPos.z);
             Vector3 targetOriginPos = targetPosition + originPos - playerGroundPos;
 
-            // 2. Identify destination & start surface colliders & platform roots
-            Collider destCollider = null;
-            Transform destPlatform = null;
-            if (Physics.Raycast(targetPosition + Vector3.up * 0.3f, Vector3.down, out RaycastHit destHit, 0.8f, m_ObstacleLayers, QueryTriggerInteraction.Ignore))
-            {
-                destCollider = destHit.collider;
-                destPlatform = destHit.collider.transform;
-                if (destPlatform.parent != null && destPlatform.parent.GetComponentInParent<XROrigin>() == null)
-                {
-                    destPlatform = destPlatform.parent;
-                }
-            }
+            // Identify surfaces to exclude lips/edges of departure and arrival platforms
+            GetSurfaceInfo(targetPosition, out Collider destCol, out Transform destPlat);
+            GetSurfaceInfo(playerGroundPos, out Collider startCol, out Transform startPlat);
 
-            Collider startCollider = null;
-            Transform startPlatform = null;
-            if (Physics.Raycast(playerGroundPos + Vector3.up * 0.3f, Vector3.down, out RaycastHit startHit, 0.8f, m_ObstacleLayers, QueryTriggerInteraction.Ignore))
-            {
-                startCollider = startHit.collider;
-                startPlatform = startHit.collider.transform;
-                if (startPlatform.parent != null && startPlatform.parent.GetComponentInParent<XROrigin>() == null)
-                {
-                    startPlatform = startPlatform.parent;
-                }
-            }
-
-            // 3. Obstacle collision sweep along dash trajectory
             bool wasBlocked = false;
             Vector3 dashVec = targetOriginPos - originPos;
             float dashDist = dashVec.magnitude;
@@ -150,33 +110,18 @@ namespace LOG8704.Locomotion
             if (dashDist > 0.05f)
             {
                 Vector3 dashDir = dashVec / dashDist;
-
-                // CapsuleCast along the path using player's actual room-scale position
-                Vector3 capsuleBottom = playerGroundPos + Vector3.up * (m_PlayerRadius + 0.05f);
-                Vector3 capsuleTop = playerGroundPos + Vector3.up * (actualPlayerHeight - m_PlayerRadius);
-                if (capsuleTop.y <= capsuleBottom.y)
-                    capsuleTop = capsuleBottom + Vector3.up * 0.2f;
-
-                var hits = Physics.CapsuleCastAll(capsuleBottom, capsuleTop, m_PlayerRadius, dashDir, dashDist, m_ObstacleLayers, QueryTriggerInteraction.Ignore);
-                System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
-
-                foreach (var hit in hits)
+                if (CheckObstacleAlongPath(playerGroundPos, dashDir, dashDist, actualPlayerHeight, destCol, destPlat, startCol, startPlat, origin.transform, out RaycastHit hit))
                 {
-                    if (!IsObstacle(hit.collider, hit.normal, destCollider, destPlatform, startCollider, startPlatform, origin.transform))
-                        continue;
-
-                    // Obstacle (wall, pillar, barrier) directly in the path
                     float safeDist = Mathf.Max(0f, hit.distance - m_SkinWidth);
                     if (safeDist <= 0.05f)
                     {
                         TryEndLocomotion();
-                        TriggerHaptics(0.6f, 0.1f);
+                        TriggerDashHaptics(0.6f, 0.1f);
                         return false;
                     }
 
                     targetOriginPos = originPos + dashDir * safeDist;
                     wasBlocked = true;
-                    break;
                 }
             }
 
@@ -184,169 +129,144 @@ namespace LOG8704.Locomotion
             return true;
         }
 
-        private bool IsObstacle(Collider col, Vector3 normal, Collider destCol, Transform destPlatform, Collider startCol, Transform startPlatform, Transform rigTransform)
+        public bool CheckObstacleAlongPath(Vector3 origin, Vector3 direction, float distance, out RaycastHit hit)
         {
-            if (col == null || col.isTrigger)
-                return false;
-
-            // Ignore player rig and self-colliders
-            if (col.transform == rigTransform || col.transform.IsChildOf(rigTransform))
-                return false;
-
-            // Ignore destination platform / surface colliders
-            if (destCol != null)
-            {
-                if (col == destCol)
-                    return false;
-                if (destPlatform != null && (col.transform.IsChildOf(destPlatform) || destPlatform.IsChildOf(col.transform)))
-                    return false;
-            }
-
-            // Ignore start platform / surface colliders (so stepping off an elevated platform/box doesn't hit its front lip)
-            if (startCol != null)
-            {
-                if (col == startCol)
-                    return false;
-                if (startPlatform != null && (col.transform.IsChildOf(startPlatform) || startPlatform.IsChildOf(col.transform)))
-                    return false;
-            }
-
-            // Ignore flat or gentle walkable floors under the trajectory (slope < 45 deg, normal.y > 0.7)
-            if (normal.y > 0.7f)
-                return false;
-
-            return true;
+            return CheckObstacleAlongPath(origin, direction, distance, m_PlayerHeight, null, null, null, null, null, out hit);
         }
 
-        private XROrigin GetXROrigin()
+        private bool CheckObstacleAlongPath(Vector3 groundOrigin, Vector3 direction, float distance, float playerHeight,
+            Collider destCol, Transform destPlatform, Collider startCol, Transform startPlatform, Transform rigTransform,
+            out RaycastHit blockingHit)
         {
-            XROrigin origin = mediator != null ? mediator.xrOrigin : null;
-            if (origin == null)
+            blockingHit = default;
+            Vector3 capsuleBottom = groundOrigin + Vector3.up * (m_PlayerRadius + 0.05f);
+            Vector3 capsuleTop = groundOrigin + Vector3.up * Mathf.Max(m_PlayerRadius + 0.25f, playerHeight - m_PlayerRadius);
+
+            var hits = Physics.CapsuleCastAll(capsuleBottom, capsuleTop, m_PlayerRadius, direction, distance, m_ObstacleLayers, QueryTriggerInteraction.Ignore);
+            Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+            foreach (var h in hits)
             {
-                origin = GetComponentInParent<XROrigin>();
-                if (origin == null)
-                    origin = FindFirstObjectByType<XROrigin>();
+                if (IsObstacle(h.collider, h.normal, destCol, destPlatform, startCol, startPlatform, rigTransform))
+                {
+                    blockingHit = h;
+                    return true;
+                }
             }
-            return origin;
+            return false;
         }
 
-        private IEnumerator PerformDash(XROrigin origin, Vector3 targetPosition, Quaternion? targetRotation, bool wasBlocked, System.Action onComplete)
+        public Vector3 CalculateElevationArc(Vector3 start, Vector3 end, float progress)
+        {
+            float heightDiff = end.y - start.y;
+            Vector3 pos = Vector3.Lerp(start, end, progress);
+
+            if (heightDiff > 0.15f)
+            {
+                // Climbing: add vertical parabola (sin arc) to cleanly clear platform ledges
+                float arcHeight = Mathf.Min(0.35f, heightDiff * 0.5f);
+                pos.y = Mathf.Lerp(start.y, end.y, Mathf.SmoothStep(0f, 1f, progress)) + Mathf.Sin(progress * Mathf.PI) * arcHeight;
+            }
+            else if (heightDiff < -0.15f)
+            {
+                // Descending: delay vertical fall until clearing horizontal step edge
+                float dropProgress = Mathf.Clamp01((progress - 0.15f) / 0.85f);
+                pos.y = Mathf.Lerp(start.y, end.y, Mathf.SmoothStep(0f, 1f, dropProgress));
+            }
+
+            return pos;
+        }
+
+        public void TriggerHaptics(float amplitude, float duration) => TriggerDashHaptics(amplitude, duration);
+
+        public void TriggerDashHaptics(float intensity, float duration)
+        {
+            if (!m_EnableHaptics) return;
+
+            try
+            {
+                var interactors = FindObjectsByType<XRBaseInputInteractor>(FindObjectsSortMode.None);
+                foreach (var interactor in interactors)
+                    interactor.SendHapticImpulse(intensity, duration);
+
+                var devices = new List<UnityEngine.XR.InputDevice>();
+                UnityEngine.XR.InputDevices.GetDevicesWithCharacteristics(
+                    UnityEngine.XR.InputDeviceCharacteristics.Controller | UnityEngine.XR.InputDeviceCharacteristics.HeldInHand,
+                    devices);
+                foreach (var dev in devices)
+                    dev.SendHapticImpulse(0u, intensity, duration);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[DashProvider] Haptic impulse failed: {ex.Message}");
+            }
+        }
+
+        private IEnumerator PerformDash(XROrigin origin, Vector3 targetPosition, Quaternion? targetRotation, bool wasBlocked, Action onComplete)
         {
             m_IsDashing = true;
 
             try
             {
-                // 1. Launch feedback: trigger crisp tactile impulse
-                TriggerHaptics(0.45f, 0.08f);
+                TriggerDashHaptics(0.45f, 0.08f);
 
-                // 2. Comfort: respect global vignette toggle from TP1ComfortManager
-                bool shouldShowVignette = m_VignetteController != null;
-                if (TP1ComfortManager.Instance != null && !TP1ComfortManager.Instance.isVignetteActive)
-                {
-                    shouldShowVignette = false;
-                }
+                bool showVignette = m_VignetteController != null &&
+                    (TP1ComfortManager.Instance == null || TP1ComfortManager.Instance.isVignetteActive);
 
-                if (shouldShowVignette && m_VignetteController != null)
+                if (showVignette)
                     m_VignetteController.BeginTunnelingVignette(this);
 
-                var originTransform = origin.Origin.transform;
+                Transform originTransform = origin.Origin.transform;
                 Vector3 originStart = originTransform.position;
                 Quaternion rotStart = originTransform.rotation;
 
-                // Retrieve CharacterController
-                CharacterController cc = origin.Origin != null ? origin.Origin.GetComponent<CharacterController>() : null;
-                if (cc == null && origin.GetComponent<CharacterController>() != null)
-                    cc = origin.GetComponent<CharacterController>();
-
-                // Elevation analysis: calculate clearance arc for elevated platforms and steps
-                float heightDiff = targetPosition.y - originStart.y;
-                bool isClimbing = heightDiff > 0.15f;
-                bool isDescending = heightDiff < -0.15f;
-                float arcHeight = isClimbing ? Mathf.Min(0.35f, heightDiff * 0.5f) : 0f;
+                CharacterController cc = origin.Origin.GetComponent<CharacterController>() ?? origin.GetComponent<CharacterController>();
 
                 float elapsed = 0f;
-
                 while (elapsed < m_DashDuration)
                 {
                     elapsed += Time.deltaTime;
                     float t = Mathf.Clamp01(elapsed / m_DashDuration);
                     float curvedT = m_DashCurve.Evaluate(t);
 
-                    Vector3 desiredPos = Vector3.Lerp(originStart, targetPosition, curvedT);
-
-                    // Smooth elevation profiling to clear platform edges cleanly
-                    if (isClimbing)
-                    {
-                        float verticalArc = Mathf.Sin(t * Mathf.PI) * arcHeight;
-                        desiredPos.y = Mathf.Lerp(originStart.y, targetPosition.y, Mathf.SmoothStep(0f, 1f, t)) + verticalArc;
-                    }
-                    else if (isDescending)
-                    {
-                        // Step out horizontally before dropping cleanly to lower ground
-                        float dropT = Mathf.Clamp01((t - 0.15f) / 0.85f);
-                        desiredPos.y = Mathf.Lerp(originStart.y, targetPosition.y, Mathf.SmoothStep(0f, 1f, dropT));
-                    }
-
+                    Vector3 desiredPos = CalculateElevationArc(originStart, targetPosition, curvedT);
                     Vector3 frameStep = desiredPos - originTransform.position;
 
                     if (cc != null && cc.enabled)
-                    {
                         cc.Move(frameStep);
-                    }
                     else
-                    {
                         originTransform.position += frameStep;
-                    }
 
                     if (targetRotation.HasValue)
-                    {
                         originTransform.rotation = Quaternion.Slerp(rotStart, targetRotation.Value, curvedT);
-                    }
 
                     yield return null;
                 }
 
-                // Final step to destination
+                // Snap to final arrival position
                 Vector3 finalStep = targetPosition - originTransform.position;
                 if (cc != null && cc.enabled)
-                {
                     cc.Move(finalStep);
-                }
                 else
-                {
                     originTransform.position = targetPosition;
-                }
 
                 if (targetRotation.HasValue)
-                {
                     originTransform.rotation = targetRotation.Value;
-                }
 
                 // Ground snap on arrival if not blocked by a vertical wall
                 if (!wasBlocked && Physics.Raycast(originTransform.position + Vector3.up * 0.4f, Vector3.down, out RaycastHit landHit, 1.0f, m_ObstacleLayers, QueryTriggerInteraction.Ignore))
                 {
-                    Vector3 groundOffset = (landHit.point - originTransform.position);
-                    groundOffset.x = 0f;
-                    groundOffset.z = 0f;
+                    Vector3 groundOffset = new Vector3(0f, landHit.point.y - originTransform.position.y, 0f);
                     if (cc != null && cc.enabled)
                         cc.Move(groundOffset);
                     else
                         originTransform.position += groundOffset;
                 }
 
-                // Landing / impact tactile feedback
-                if (wasBlocked)
-                {
-                    TriggerHaptics(0.65f, 0.12f); // Obstacle collision thud
-                }
-                else
-                {
-                    TriggerHaptics(0.25f, 0.05f); // Soft landing settle
-                }
+                TriggerDashHaptics(wasBlocked ? 0.65f : 0.25f, wasBlocked ? 0.12f : 0.05f);
             }
             finally
             {
-                // Guaranteed state cleanup even if coroutine is interrupted or stopped
                 Physics.SyncTransforms();
                 m_LastDashTime = Time.time;
                 m_IsDashing = false;
@@ -356,42 +276,43 @@ namespace LOG8704.Locomotion
 
                 TryEndLocomotion();
                 m_DashCoroutine = null;
-
                 onComplete?.Invoke();
             }
         }
 
-        /// <summary>
-        /// Triggers tactile vibration on both active VR controllers using OpenXR and XRI pipelines.
-        /// </summary>
-        public void TriggerHaptics(float amplitude, float duration)
+        private void GetSurfaceInfo(Vector3 pos, out Collider col, out Transform platform)
         {
-            if (!m_EnableHaptics)
-                return;
-
-            try
+            col = null;
+            platform = null;
+            if (Physics.Raycast(pos + Vector3.up * 0.3f, Vector3.down, out RaycastHit hit, 0.8f, m_ObstacleLayers, QueryTriggerInteraction.Ignore))
             {
-                // 1. Send haptics via XRI Interactors
-                var interactors = FindObjectsByType<XRBaseInputInteractor>(FindObjectsSortMode.None);
-                foreach (var interactor in interactors)
-                {
-                    interactor.SendHapticImpulse(amplitude, duration);
-                }
+                col = hit.collider;
+                platform = hit.collider.transform;
+                if (platform.parent != null && platform.parent.GetComponentInParent<XROrigin>() == null)
+                    platform = platform.parent;
+            }
+        }
 
-                // 2. Send haptics via UnityEngine.XR.InputDevices for hardware controllers
-                var devices = new List<UnityEngine.XR.InputDevice>();
-                UnityEngine.XR.InputDevices.GetDevicesWithCharacteristics(
-                    UnityEngine.XR.InputDeviceCharacteristics.Controller | UnityEngine.XR.InputDeviceCharacteristics.HeldInHand,
-                    devices);
-                foreach (var dev in devices)
-                {
-                    dev.SendHapticImpulse(0u, amplitude, duration);
-                }
-            }
-            catch (System.Exception ex)
-            {
-                Debug.LogWarning($"[DashProvider] Haptic impulse failed: {ex.Message}");
-            }
+        private bool IsObstacle(Collider col, Vector3 normal, Collider destCol, Transform destPlatform, Collider startCol, Transform startPlatform, Transform rigTransform)
+        {
+            if (col == null || col.isTrigger) return false;
+            if (rigTransform != null && (col.transform == rigTransform || col.transform.IsChildOf(rigTransform))) return false;
+
+            if (destCol != null && (col == destCol || (destPlatform != null && (col.transform.IsChildOf(destPlatform) || destPlatform.IsChildOf(col.transform)))))
+                return false;
+
+            if (startCol != null && (col == startCol || (startPlatform != null && (col.transform.IsChildOf(startPlatform) || startPlatform.IsChildOf(col.transform)))))
+                return false;
+
+            // Reject horizontal walkable floors (slope < 45 degrees)
+            return normal.y <= 0.7f;
+        }
+
+        private XROrigin GetXROrigin()
+        {
+            return (mediator != null ? mediator.xrOrigin : null)
+                ?? GetComponentInParent<XROrigin>()
+                ?? FindFirstObjectByType<XROrigin>();
         }
     }
 }

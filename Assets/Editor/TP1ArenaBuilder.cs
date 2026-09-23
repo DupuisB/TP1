@@ -35,26 +35,6 @@ namespace LOG8704.Editor
         private const string XrOriginPrefabPath = "Assets/Samples/XR Interaction Toolkit/3.5.1/Starter Assets/Prefabs/XR Origin (XR Rig).prefab";
         private const string TunnelingVignettePrefabPath = "Assets/Samples/XR Interaction Toolkit/3.5.1/Starter Assets/TunnelingVignette/TunnelingVignette.prefab";
 
-        [InitializeOnLoadMethod]
-        private static void OnInitialize()
-        {
-            EditorApplication.delayCall += () =>
-            {
-                if (!EditorApplication.isPlaying && EditorPrefs.GetBool("TP1_Rebuild_V6", false))
-                {
-                    EditorPrefs.SetBool("TP1_Rebuild_V6", false);
-                    Debug.Log("[TP1ArenaBuilder] Generating pristine TP1 Test Arena scene with unpacked rig (V6)...");
-                    BuildArenaScene();
-                }
-
-                if (!EditorApplication.isPlaying && !EditorPrefs.GetBool("TP1_Boxes_Teleportable_V1", false))
-                {
-                    EditorPrefs.SetBool("TP1_Boxes_Teleportable_V1", true);
-                    Debug.Log("[TP1ArenaBuilder] Automatically configuring Synty Demo scene with elevated surfaces (boxes, crates, platforms, ramps)...");
-                    SetupSyntyDemoScene();
-                }
-            };
-        }
 
         [MenuItem("LOG8704/Build TP1 Test Arena Scene")]
         public static void BuildArenaScene()
@@ -128,7 +108,7 @@ namespace LOG8704.Editor
             boxCol.center = Vector3.zero;
             var safetyBlocked = safetyFloor.AddComponent<BlockedTeleportArea>();
             safetyBlocked.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
-            safetyBlocked.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+            safetyBlocked.interactionLayers = InteractionLayerMask.GetMask("Default", "Teleport");
 
             // 7. Setup XR Rig and Locomotion
             var rigInstance = SetupXRRig(scene, preservedWristPos, preservedWristRot);
@@ -244,7 +224,7 @@ namespace LOG8704.Editor
                         blockedArea = col.gameObject.AddComponent<BlockedTeleportArea>();
                     }
                     blockedArea.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
-                    blockedArea.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+                    blockedArea.interactionLayers = InteractionLayerMask.GetMask("Default", "Teleport");
                     blockedCount++;
                     continue;
                 }
@@ -265,7 +245,7 @@ namespace LOG8704.Editor
                     }
                     teleArea.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
                     teleArea.matchOrientation = MatchOrientation.WorldSpaceUp;
-                    teleArea.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+                    teleArea.interactionLayers = InteractionLayerMask.GetMask("Default", "Teleport");
                     teleArea.filterSelectionByHitNormal = true;
                     teleArea.upNormalToleranceDegrees = 60f;
                     surfaceCount++;
@@ -285,7 +265,7 @@ namespace LOG8704.Editor
                         blockedArea = col.gameObject.AddComponent<BlockedTeleportArea>();
                     }
                     blockedArea.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
-                    blockedArea.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+                    blockedArea.interactionLayers = InteractionLayerMask.GetMask("Default", "Teleport");
                     blockedCount++;
                 }
             }
@@ -325,7 +305,7 @@ namespace LOG8704.Editor
                 safetyBlocked = safetyFloor.AddComponent<BlockedTeleportArea>();
             }
             safetyBlocked.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
-            safetyBlocked.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+            safetyBlocked.interactionLayers = InteractionLayerMask.GetMask("Default", "Teleport");
 
             // 5. Setup XR Rig and Locomotion
             var rigInstance = SetupXRRig(scene, preservedWristPos, preservedWristRot);
@@ -483,7 +463,7 @@ namespace LOG8704.Editor
 
             // Attach BlockedTeleportArea so aiming at boundary walls displays the orange line with endpoint and cross reticle
             var blocked = wall.AddComponent<BlockedTeleportArea>();
-            blocked.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+            blocked.interactionLayers = InteractionLayerMask.GetMask("Default", "Teleport");
             blocked.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
         }
 
@@ -509,7 +489,7 @@ namespace LOG8704.Editor
 
             // Attach BlockedTeleportArea to vertical obstacle body
             var blockedBody = box.AddComponent<BlockedTeleportArea>();
-            blockedBody.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+            blockedBody.interactionLayers = InteractionLayerMask.GetMask("Default", "Teleport");
             blockedBody.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
 
             // Top horizontal surface: Can be aimed at by teleport ray, but REJECTS teleportation (BlockedTeleportArea)
@@ -524,7 +504,7 @@ namespace LOG8704.Editor
 
             // Attach BlockedTeleportArea to obstacle top so aiming at it shows the cross reticle
             var blockedTop = topSurface.AddComponent<BlockedTeleportArea>();
-            blockedTop.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+            blockedTop.interactionLayers = InteractionLayerMask.GetMask("Default", "Teleport");
             blockedTop.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
 
             Debug.Log("[TP1ArenaBuilder] Obstacle Box created with BlockedTeleportArea on vertical body and top surface.");
@@ -552,7 +532,7 @@ namespace LOG8704.Editor
 
             // Attach BlockedTeleportArea to vertical platform sides so aiming at side shows orange cross
             var blockedBody = body.AddComponent<BlockedTeleportArea>();
-            blockedBody.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+            blockedBody.interactionLayers = InteractionLayerMask.GetMask("Default", "Teleport");
             blockedBody.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
 
             // Top surface with TeleportationArea (allows valid teleport and dash)
@@ -569,7 +549,7 @@ namespace LOG8704.Editor
             var teleportArea = topSurface.AddComponent<TeleportationArea>();
             teleportArea.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
             teleportArea.matchOrientation = MatchOrientation.WorldSpaceUp;
-            teleportArea.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+            teleportArea.interactionLayers = InteractionLayerMask.GetMask("Default", "Teleport");
             teleportArea.filterSelectionByHitNormal = true;
             teleportArea.upNormalToleranceDegrees = 75f;
 
@@ -593,7 +573,7 @@ namespace LOG8704.Editor
                 table.GetComponent<Renderer>().sharedMaterial = tableMat;
 
             var blockedPedestal = table.AddComponent<BlockedTeleportArea>();
-            blockedPedestal.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+            blockedPedestal.interactionLayers = InteractionLayerMask.GetMask("Default", "Teleport");
             blockedPedestal.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
 
             // 2. Grabbable Dynamic Cube (XRGrabInteractable)
@@ -613,7 +593,7 @@ namespace LOG8704.Editor
             grab.movementType = XRBaseInteractable.MovementType.VelocityTracking;
             grab.throwOnDetach = true;
             grab.throwVelocityScale = 1.2f;
-            grab.interactionLayers = unchecked((int)2147483648) | 1;
+            grab.interactionLayers = InteractionLayerMask.GetMask("Default", "Teleport");
 
             // 3. Socket Interactor (XRSocketInteractor)
             var socketPad = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -639,7 +619,7 @@ namespace LOG8704.Editor
             var socket = socketObj.AddComponent<XRSocketInteractor>();
             socket.socketActive = true;
             socket.showInteractableHoverMeshes = true;
-            socket.interactionLayers = unchecked((int)2147483648) | 1;
+            socket.interactionLayers = InteractionLayerMask.GetMask("Default", "Teleport");
 
             Debug.Log("[TP1ArenaBuilder] Interaction Test Station created with Pedestal, Dynamic XRGrabInteractable Cube, and XRSocketInteractor.");
         }
@@ -782,7 +762,7 @@ namespace LOG8704.Editor
                 area.teleportationProvider = comfortTeleport;
                 area.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
                 area.matchOrientation = MatchOrientation.WorldSpaceUp;
-                area.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+                area.interactionLayers = InteractionLayerMask.GetMask("Default", "Teleport");
             }
 
             var blockedAreas = UnityEngine.Object.FindObjectsByType<BlockedTeleportArea>(FindObjectsSortMode.None);
@@ -790,7 +770,7 @@ namespace LOG8704.Editor
             {
                 blocked.teleportationProvider = comfortTeleport;
                 blocked.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
-                blocked.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+                blocked.interactionLayers = InteractionLayerMask.GetMask("Default", "Teleport");
             }
 
             // Locate ContinuousMoveProvider
@@ -1464,7 +1444,7 @@ namespace LOG8704.Editor
             var teleportArea = root.AddComponent<TeleportationArea>();
             teleportArea.teleportTrigger = BaseTeleportationInteractable.TeleportTrigger.OnSelectExited;
             teleportArea.matchOrientation = MatchOrientation.WorldSpaceUp;
-            teleportArea.interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+            teleportArea.interactionLayers = InteractionLayerMask.GetMask("Default", "Teleport");
             teleportArea.filterSelectionByHitNormal = true;
             teleportArea.upNormalToleranceDegrees = 75f;
 

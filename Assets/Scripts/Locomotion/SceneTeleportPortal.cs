@@ -69,14 +69,14 @@ namespace LOG8704.Locomotion
         {
             base.Reset();
             teleportTrigger = TeleportTrigger.OnSelectExited;
-            interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+            interactionLayers = InteractionLayerMask.GetMask("Default", "Teleport");
         }
 
         protected override void Awake()
         {
             base.Awake();
             teleportTrigger = TeleportTrigger.OnSelectExited;
-            interactionLayers = unchecked((int)2147483648) | 1 | InteractionLayerMask.GetMask("Teleport");
+            interactionLayers = InteractionLayerMask.GetMask("Default", "Teleport");
             m_IsTransitioning = false;
 
             if (m_CurtainRenderer != null)
