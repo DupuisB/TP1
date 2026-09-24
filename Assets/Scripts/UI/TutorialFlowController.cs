@@ -1,8 +1,9 @@
 using System;
-using LOG8704.Locomotion;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
+using LOG8704.Locomotion;
+using UnityEngine.XR.Interaction.Toolkit.UI;
 
 namespace LOG8704.UI
 {
@@ -44,6 +45,10 @@ namespace LOG8704.UI
         private Vector3 m_LastPlayerPosition;
         private bool m_WasDashing = false;
         private bool m_WristButtonsHooked = false;
+        private float m_StepStartTime = 0f;
+        private float m_WristGazeDwellTime = 0f;
+        private const float k_RequiredWristGazeDwell = 1.2f;
+        private const float k_StartupGracePeriod = 1.5f;
 
         public Step currentStep => m_CurrentStep;
 
@@ -52,6 +57,8 @@ namespace LOG8704.UI
             FindSceneReferencesIfNeeded();
             WireSkipButton();
             GatePortal(true);
+            m_StepStartTime = Time.time;
+            m_WristGazeDwellTime = 0f;
             SetStep(Step.OpenWristMenu);
         }
 
@@ -97,12 +104,14 @@ namespace LOG8704.UI
         public void RestartTutorial()
         {
             m_SmoothMoveAccumulatedDistance = 0f;
+            m_StepStartTime = Time.time;
+            m_WristGazeDwellTime = 0f;
             SetStep(Step.OpenWristMenu);
         }
 
         public void OnAnyWristButtonPressed()
         {
-            if (m_CurrentStep == Step.OpenWristMenu)
+            if (m_CurrentStep == Step.OpenWristMenu && Time.time >= m_StepStartTime + 0.5f)
                 SetStep(Step.TeleportWithBlink);
         }
 
@@ -114,8 +123,13 @@ namespace LOG8704.UI
 
         private void OnLocomotionModeChanged(TP1ComfortManager.LocomotionMode mode)
         {
-            if (m_CurrentStep == Step.OpenWristMenu)
-                SetStep(Step.TeleportWithBlink);
+            // Only advance if past startup grace period AND wrist menu is visibly open
+            if (m_CurrentStep == Step.OpenWristMenu && Time.time >= m_StepStartTime + k_StartupGracePeriod)
+            {
+                var wrist = FindFirstObjectByType<WristUIController>();
+                if (wrist != null && wrist.isMenuVisible)
+                    SetStep(Step.TeleportWithBlink);
+            }
         }
 
         private void TrackLocomotionStepProgress()
@@ -139,9 +153,51 @@ namespace LOG8704.UI
 
         private void EvaluateWristStep()
         {
+            // 1. Enforce initial startup grace period so startup events/frames never auto-complete
+            if (Time.time < m_StepStartTime + k_StartupGracePeriod)
+            {
+                if (m_StepProgressText != null)
+                    m_StepProgressText.text = "Initialisation...";
+                return;
+            }
+
             var wrist = FindFirstObjectByType<WristUIController>();
-            if (wrist != null && wrist.isMenuVisible)
-                SetStep(Step.TeleportWithBlink);
+            if (wrist == null)
+            {
+                if (m_StepProgressText != null)
+                    m_StepProgressText.text = "En attente du contrôleur...";
+                return;
+            }
+
+            // 2. Check if the smartwatch menu is open and clearly visible
+            bool isFullyVisible = wrist.isMenuVisible && wrist.menuAlpha >= 0.7f;
+
+            if (isFullyVisible)
+            {
+                m_WristGazeDwellTime += Time.deltaTime;
+                float progressFraction = Mathf.Clamp01(m_WristGazeDwellTime / k_RequiredWristGazeDwell);
+
+                if (m_StepProgressText != null)
+                {
+                    int pct = Mathf.RoundToInt(progressFraction * 100f);
+                    m_StepProgressText.text = $"<color=#38ef7d>Menu ouvert !</color> Maintenez le regard ({pct}%) ou appuyez sur un bouton";
+                }
+
+                if (m_WristGazeDwellTime >= k_RequiredWristGazeDwell)
+                {
+                    SetStep(Step.TeleportWithBlink);
+                }
+            }
+            else
+            {
+                // Smoothly decay dwell time if looking away before reaching threshold
+                m_WristGazeDwellTime = Mathf.Max(0f, m_WristGazeDwellTime - Time.deltaTime * 2.5f);
+
+                if (m_StepProgressText != null)
+                {
+                    m_StepProgressText.text = "Tournez votre poignet gauche vers vos yeux (ou touche [M])";
+                }
+            }
         }
 
         private void EvaluateTeleportStep()
@@ -202,11 +258,13 @@ namespace LOG8704.UI
             switch (step)
             {
                 case Step.OpenWristMenu:
+                    m_StepStartTime = Time.time;
+                    m_WristGazeDwellTime = 0f;
                     UpdateDisplay(
                         "ÉTAPE 1 / 4",
                         "MENU DE POIGNET (SMARTWATCH)",
                         "Tournez votre poignet gauche vers vos yeux (ou appuyez sur la touche [M] sur Desktop) pour ouvrir l'interface. Appuyez sur n'importe quel bouton pour continuer.",
-                        "En attente du menu..."
+                        "Initialisation..."
                     );
                     if (m_TeleportTargetZone != null) m_TeleportTargetZone.SetActive(false);
                     GatePortal(true);
@@ -215,7 +273,7 @@ namespace LOG8704.UI
                 case Step.TeleportWithBlink:
                     UpdateDisplay(
                         "ÉTAPE 2 / 4",
-                        "TÉLÉPORTATION & TRANSITION BLINK",
+                        "TÉLÉPORTATION & BLINK",
                         "Sur le menu du poignet, activez TÉLÉPORT (et assurez-vous que BLINK est actif). Poussez le joystick gauche vers l'avant pour viser la cible bleu au sol, puis relâchez pour vous y téléporter.",
                         "Visez la cible lumineuse"
                     );
@@ -289,7 +347,7 @@ namespace LOG8704.UI
 
             if (m_ExitPortal != null)
             {
-                m_ExitPortal.enabled = !locked;
+                m_ExitPortal.SetGated(locked);
 
                 if (m_ExitPortal.curtainRenderer != null)
                 {
@@ -318,7 +376,8 @@ namespace LOG8704.UI
 
         private void TryWireWristButtons()
         {
-            var wristRoot = GameObject.Find("Wrist_Comfort_UI");
+            var wrist = FindFirstObjectByType<WristUIController>();
+            Transform wristRoot = wrist != null ? wrist.transform : GameObject.Find("Wrist_Comfort_UI")?.transform;
             if (wristRoot == null) return;
 
             bool anyHooked = false;
@@ -326,7 +385,7 @@ namespace LOG8704.UI
 
             foreach (var bName in buttons)
             {
-                var t = wristRoot.transform.Find($"BackgroundPanel/{bName}");
+                var t = wristRoot.Find($"BackgroundPanel/{bName}") ?? wristRoot.Find(bName);
                 if (t != null)
                 {
                     var btn = t.GetComponent<Button>();
@@ -370,7 +429,7 @@ namespace LOG8704.UI
 
             var controller = root.AddComponent<TutorialFlowController>();
 
-            var banner = CreateText(panelObj.transform, "HeaderBanner", "LOG8704 • CENTRE D'ENTRAÎNEMENT VR", 24f, FontStyles.Bold, new Vector2(0f, 280f), new Vector2(920f, 40f));
+            var banner = CreateText(panelObj.transform, "HeaderBanner", "Tutoreil d'utilisation", 24f, FontStyles.Bold, new Vector2(0f, 280f), new Vector2(920f, 40f));
             banner.color = new Color(0.22f, 0.94f, 0.49f);
 
             var stepBadge = CreateText(panelObj.transform, "StepBadge", "ÉTAPE 1 / 4", 20f, FontStyles.Bold, new Vector2(-330f, 230f), new Vector2(260f, 34f));

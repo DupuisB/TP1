@@ -1395,11 +1395,11 @@ namespace LOG8704.Editor
             var tutorialController = TutorialFlowController.CreateTutorialBoard(
                 null,
                 new Vector3(-7.5f, 1.4f, 86.8f),
-                Quaternion.Euler(0f, 0f, 0f)
+                Quaternion.Euler(0f, 180f, 0f)
             );
 
-            // Create Teleport Target Zone pad down the room
-            var targetZoneGo = CreateTutorialTargetZone(new Vector3(-7.5f, 0.05f, 81.5f), tutorialController);
+            // Create Teleport Target Zone pad to the right of spawn (-10.5, 0.05, 85.0) with unobstructed line of sight
+            var targetZoneGo = CreateTutorialTargetZone(new Vector3(-10.5f, 0.05f, 85.0f), tutorialController);
 
             // Wire TutorialFlowController scene references
             tutorialController.teleportTargetZone = targetZoneGo;
@@ -1451,10 +1451,11 @@ namespace LOG8704.Editor
             var trigger = root.AddComponent<TutorialTeleportZoneTrigger>();
             trigger.SetController(controller);
 
-            // Floating beacon label above pad
+            // Floating beacon label above pad (angled toward player spawn at -7.5, 2.0, 90.0)
             var labelGo = new GameObject("Zone_Label");
             labelGo.transform.SetParent(root.transform, false);
             labelGo.transform.localPosition = new Vector3(0f, 15.0f, 0f); // 15 * 0.04 = 0.6m above pad
+            labelGo.transform.localRotation = Quaternion.Euler(0f, 211f, 0f);
             labelGo.transform.localScale = new Vector3(0.38f, 25.0f, 0.38f);
             var labelTmp = labelGo.AddComponent<TextMeshPro>();
             labelTmp.text = "<color=#38ef7d><b>ZONE CIBLE</b></color>\n<size=70%>TÉLÉPORTEZ-VOUS ICI</size>";
@@ -1488,6 +1489,27 @@ namespace LOG8704.Editor
                 frame.name = "Arch_Frame";
                 frame.transform.localPosition = new Vector3(-0.654f, 0f, -0.086f);
                 frame.transform.localRotation = Quaternion.identity;
+
+                // MeshCollider for exact visual/physical mesh contour
+                var mf = frame.GetComponent<MeshFilter>();
+                if (mf != null && mf.sharedMesh != null)
+                {
+                    var meshCol = frame.AddComponent<MeshCollider>();
+                    meshCol.sharedMesh = mf.sharedMesh;
+                }
+
+                // Solid BoxColliders for left & right pillars and top lintel to ensure 100% impenetrable VR collisions
+                var leftPillar = frame.AddComponent<BoxCollider>();
+                leftPillar.center = new Vector3(0.08f, 1.05f, 0.086f);
+                leftPillar.size = new Vector3(0.22f, 2.1f, 0.22f);
+
+                var rightPillar = frame.AddComponent<BoxCollider>();
+                rightPillar.center = new Vector3(1.23f, 1.05f, 0.086f);
+                rightPillar.size = new Vector3(0.22f, 2.1f, 0.22f);
+
+                var lintel = frame.AddComponent<BoxCollider>();
+                lintel.center = new Vector3(0.654f, 2.18f, 0.086f);
+                lintel.size = new Vector3(1.35f, 0.22f, 0.22f);
             }
 
             var padMat = GetOrCreateMaterial("Assets/Materials/M_ArenaPedestal.mat", new Color(0.12f, 0.14f, 0.18f), 0.5f);
@@ -1532,7 +1554,20 @@ namespace LOG8704.Editor
             triggerGo.transform.localPosition = new Vector3(0f, 1.05f, 0f);
             var triggerCol = triggerGo.AddComponent<BoxCollider>();
             triggerCol.isTrigger = true;
-            triggerCol.size = new Vector3(1.0f, 2.1f, 0.8f);
+            triggerCol.size = new Vector3(0.95f, 2.1f, 0.8f);
+
+            var triggerRb = triggerGo.AddComponent<Rigidbody>();
+            triggerRb.isKinematic = true;
+            triggerRb.useGravity = false;
+
+            // Physical barrier that blocks walking through the portal when locked
+            var barrierGo = new GameObject("Portal_Lock_Barrier");
+            barrierGo.transform.SetParent(portalRoot.transform, false);
+            barrierGo.transform.localPosition = new Vector3(0f, 1.05f, 0f);
+            var barrierCol = barrierGo.AddComponent<BoxCollider>();
+            barrierCol.size = new Vector3(0.95f, 2.1f, 0.12f);
+            barrierCol.isTrigger = false;
+            barrierCol.enabled = (targetSceneName == "Demo");
 
             // 5. Glowing Energy Curtain snuggly fitted into inner door opening
             var curtain = GameObject.CreatePrimitive(PrimitiveType.Quad);
@@ -1547,10 +1582,11 @@ namespace LOG8704.Editor
             var curtainRenderer = curtain.GetComponent<MeshRenderer>();
             curtainRenderer.sharedMaterial = curtainMat;
 
-            // 6. Floating 3D Text Header right above lintel
+            // 6. Floating 3D Text Header right above lintel (facing opposite way, turned 180° around Y)
             var signGo = new GameObject("Portal_Sign");
             signGo.transform.SetParent(portalRoot.transform, false);
             signGo.transform.localPosition = new Vector3(0f, 2.45f, 0f);
+            signGo.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
             var tmp = signGo.AddComponent<TextMeshPro>();
             tmp.text = signText;
             tmp.fontSize = 3.2f;
@@ -1558,16 +1594,21 @@ namespace LOG8704.Editor
             tmp.color = curtainColor;
             tmp.rectTransform.sizeDelta = new Vector2(4f, 1f);
 
-            // 7. Floating Status Billboard right above lintel / sign
+            // 7. Floating Status Billboard right above lintel / sign (facing opposite way, turned 180° around Y)
             var statusBillboardGo = new GameObject("Portal_Status_Billboard");
             statusBillboardGo.transform.SetParent(portalRoot.transform, false);
             statusBillboardGo.transform.localPosition = new Vector3(0f, 2.95f, 0f);
+            statusBillboardGo.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
             var statusTmp = statusBillboardGo.AddComponent<TextMeshPro>();
             statusTmp.text = "<color=#f87171><b>PORTAIL VERROUILLÉ</b></color>\n<size=70%>Complétez le tutoriel pour continuer</size>";
             statusTmp.fontSize = 2.4f;
             statusTmp.alignment = TextAlignmentOptions.Center;
             statusTmp.color = Color.white;
             statusTmp.rectTransform.sizeDelta = new Vector2(5f, 1.2f);
+            if (targetSceneName != "Demo")
+            {
+                statusBillboardGo.SetActive(false);
+            }
 
             // 8. SceneTeleportPortal component
             var portal = portalRoot.AddComponent<SceneTeleportPortal>();
@@ -1600,6 +1641,11 @@ namespace LOG8704.Editor
             }
 
             so.ApplyModifiedProperties();
+
+            // Connect PhysX trigger bridge and lock barrier
+            var bridge = triggerGo.AddComponent<SceneTeleportPortalTriggerBridge>();
+            bridge.portal = portal;
+            portal.lockBarrierCollider = barrierCol;
 
             return portalRoot;
         }

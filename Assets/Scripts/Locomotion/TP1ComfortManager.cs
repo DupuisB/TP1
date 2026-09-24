@@ -212,7 +212,7 @@ namespace LOG8704.Locomotion
             RegisterVignetteProvider(m_ContinuousTurnProvider, providers);
         }
 
-        private void RegisterVignetteProvider(LocomotionProvider provider, List<LocomotionVignetteProvider> list)
+        private void RegisterVignetteProvider(UnityEngine.XR.Interaction.Toolkit.Locomotion.LocomotionProvider provider, List<LocomotionVignetteProvider> list)
         {
             if (provider == null) return;
             foreach (var p in list)

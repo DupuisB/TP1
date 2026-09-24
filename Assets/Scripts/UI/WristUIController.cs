@@ -143,6 +143,7 @@ namespace LOG8704.UI
         private static Sprite s_RoundedPanelSprite;
 
         public bool isMenuVisible => m_CanvasGroup != null && m_CanvasGroup.alpha > 0.4f;
+        public float menuAlpha => m_CanvasGroup != null ? m_CanvasGroup.alpha : 0f;
         public Vector3 uiLocalPosition => m_UiLocalPosition;
         public Vector3 uiLocalEuler => m_UiLocalEuler;
 

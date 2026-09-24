@@ -65,6 +65,24 @@ namespace LOG8704.Locomotion
             set => m_CurtainColor = value;
         }
 
+        [Header("Barrier")]
+        [SerializeField] private Collider m_LockBarrierCollider;
+
+        public Collider lockBarrierCollider
+        {
+            get => m_LockBarrierCollider;
+            set => m_LockBarrierCollider = value;
+        }
+
+        public void SetGated(bool locked)
+        {
+            enabled = !locked;
+            if (m_LockBarrierCollider != null)
+            {
+                m_LockBarrierCollider.enabled = locked;
+            }
+        }
+
         protected override void Reset()
         {
             base.Reset();
@@ -99,6 +117,56 @@ namespace LOG8704.Locomotion
                 m_PropertyBlock.SetColor(EmissionColorId, currentEmission);
                 m_CurtainRenderer.SetPropertyBlock(m_PropertyBlock);
             }
+
+            // Proximity check: triggers transition when player walks or dashes through the doorway volume
+            if (isActiveAndEnabled && !m_IsTransitioning)
+            {
+                CheckWalkThroughProximity();
+            }
+        }
+
+        private void CheckWalkThroughProximity()
+        {
+            if (string.IsNullOrEmpty(m_TargetSceneName))
+                return;
+
+            Vector3 testPos = Vector3.zero;
+            bool found = false;
+
+            var cam = Camera.main;
+            if (cam == null)
+            {
+                var camGo = GameObject.FindWithTag("MainCamera");
+                if (camGo != null) cam = camGo.GetComponent<Camera>();
+            }
+
+            if (cam != null)
+            {
+                testPos = cam.transform.position;
+                found = true;
+            }
+            else
+            {
+                var cc = FindFirstObjectByType<CharacterController>();
+                if (cc != null)
+                {
+                    testPos = cc.transform.position + Vector3.up * 1.0f;
+                    found = true;
+                }
+            }
+
+            if (!found) return;
+
+            // Transform world position to portal local space
+            Vector3 localPos = transform.InverseTransformPoint(testPos);
+
+            // Door opening volume: width 1.0m (X +/- 0.55m), height 2.1m (Y -0.2m to 2.4m), depth 0.6m (Z +/- 0.60m)
+            if (Mathf.Abs(localPos.x) <= 0.55f &&
+                Mathf.Abs(localPos.z) <= 0.60f &&
+                localPos.y >= -0.2f && localPos.y <= 2.4f)
+            {
+                TriggerTransition();
+            }
         }
 
         /// <summary>
@@ -119,18 +187,24 @@ namespace LOG8704.Locomotion
         /// <summary>
         /// Walk-through / dash-through trigger.
         /// </summary>
-        private void OnTriggerEnter(Collider other)
+        public void OnWalkTriggerEnter(Collider other)
         {
-            if (m_IsTransitioning)
+            if (!isActiveAndEnabled || m_IsTransitioning)
                 return;
 
             // Check if player rig, CharacterController, or Camera entered the portal
             if (other.GetComponentInParent<XROrigin>() != null ||
                 other.GetComponentInParent<CharacterController>() != null ||
-                other.CompareTag("MainCamera"))
+                other.CompareTag("MainCamera") ||
+                other.GetComponentInChildren<Camera>() != null)
             {
                 TriggerTransition();
             }
+        }
+
+        private void OnTriggerEnter(Collider other)
+        {
+            OnWalkTriggerEnter(other);
         }
 
         /// <summary>
@@ -218,6 +292,21 @@ namespace LOG8704.Locomotion
             {
                 Debug.LogWarning($"[SceneTeleportPortal] Haptic pulse failed: {ex.Message}");
             }
+        }
+    }
+
+    /// <summary>
+    /// Forwards PhysX trigger events from the child Walk_Trigger volume to the portal component.
+    /// </summary>
+    [AddComponentMenu("")]
+    public class SceneTeleportPortalTriggerBridge : MonoBehaviour
+    {
+        public SceneTeleportPortal portal;
+
+        private void OnTriggerEnter(Collider other)
+        {
+            if (portal != null)
+                portal.OnWalkTriggerEnter(other);
         }
     }
 }
