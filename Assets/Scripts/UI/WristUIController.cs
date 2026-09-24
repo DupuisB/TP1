@@ -91,32 +91,38 @@ namespace LOG8704.UI
         [SerializeField] private Image m_WalkCardBg;
         [SerializeField] private Image m_WalkIconImg;
         [SerializeField] private Image m_WalkLedDot;
+        [SerializeField] private TMP_Text m_WalkStatusText;
 
         [SerializeField] private Button m_TeleportButton;
         [SerializeField] private Image m_TeleportCardBg;
         [SerializeField] private Image m_TeleportIconImg;
         [SerializeField] private Image m_TeleportLedDot;
+        [SerializeField] private TMP_Text m_TeleportStatusText;
 
         [SerializeField] private Button m_DashButton;
         [SerializeField] private Image m_DashCardBg;
         [SerializeField] private Image m_DashIconImg;
         [SerializeField] private Image m_DashLedDot;
+        [SerializeField] private TMP_Text m_DashStatusText;
 
         [Header("Option Icon Cards")]
         [SerializeField] private Button m_BlinkButton;
         [SerializeField] private Image m_BlinkCardBg;
         [SerializeField] private Image m_BlinkIconImg;
         [SerializeField] private Image m_BlinkLedDot;
+        [SerializeField] private TMP_Text m_BlinkStatusText;
 
         [SerializeField] private Button m_VignetteButton;
         [SerializeField] private Image m_VignetteCardBg;
         [SerializeField] private Image m_VignetteIconImg;
         [SerializeField] private Image m_VignetteLedDot;
+        [SerializeField] private TMP_Text m_VignetteStatusText;
 
         [SerializeField] private Button m_TurnButton;
         [SerializeField] private Image m_TurnCardBg;
         [SerializeField] private Image m_TurnIconImg;
         [SerializeField] private Image m_TurnLedDot;
+        [SerializeField] private TMP_Text m_TurnStatusText;
 
         [Header("Menu Hint")]
         [SerializeField] private TMP_Text m_GlanceHintText;
@@ -321,22 +327,29 @@ namespace LOG8704.UI
             bool vignette = mgr.isVignetteActive;
             bool isSnap = mgr.isSnapTurnActive;
 
-            UpdateCardState(m_WalkCardBg, m_WalkIconImg, m_WalkLedDot, isWalk);
-            UpdateCardState(m_TeleportCardBg, m_TeleportIconImg, m_TeleportLedDot, isTeleport);
-            UpdateCardState(m_DashCardBg, m_DashIconImg, m_DashLedDot, isDash);
-            UpdateCardState(m_BlinkCardBg, m_BlinkIconImg, m_BlinkLedDot, blink);
-            UpdateCardState(m_VignetteCardBg, m_VignetteIconImg, m_VignetteLedDot, vignette);
+            UpdateCardState(m_WalkCardBg, m_WalkIconImg, m_WalkLedDot, m_WalkStatusText, isWalk, "CONTINU");
+            UpdateCardState(m_TeleportCardBg, m_TeleportIconImg, m_TeleportLedDot, m_TeleportStatusText, isTeleport, "TÉLÉPORT");
+            UpdateCardState(m_DashCardBg, m_DashIconImg, m_DashLedDot, m_DashStatusText, isDash, "DASH (0.2s)");
+            UpdateCardState(m_BlinkCardBg, m_BlinkIconImg, m_BlinkLedDot, m_BlinkStatusText, blink, blink ? "BLINK: ON" : "BLINK: OFF");
+            UpdateCardState(m_VignetteCardBg, m_VignetteIconImg, m_VignetteLedDot, m_VignetteStatusText, vignette, vignette ? "OEILLÈRE: ON" : "OEILLÈRE: OFF");
 
             if (m_TurnCardBg != null) m_TurnCardBg.color = isSnap ? k_InactiveCardBg : k_ActiveCardBg;
             if (m_TurnIconImg != null) m_TurnIconImg.color = k_ActiveIconColor;
             if (m_TurnLedDot != null) m_TurnLedDot.color = isSnap ? k_SnapTurnLedColor : k_ActiveLedColor;
+            if (m_TurnStatusText != null)
+                m_TurnStatusText.text = isSnap ? "<color=#35baf6>SNAP 45°</color>" : "<color=#38ef7d>SMOOTH</color>";
         }
 
-        private void UpdateCardState(Image bg, Image icon, Image led, bool active)
+        private void UpdateCardState(Image bg, Image icon, Image led, TMP_Text label, bool active, string text)
         {
             if (bg != null) bg.color = active ? k_ActiveCardBg : k_InactiveCardBg;
             if (icon != null) icon.color = active ? k_ActiveIconColor : k_InactiveIconColor;
             if (led != null) led.color = active ? k_ActiveLedColor : k_InactiveLedColor;
+            if (label != null)
+            {
+                string colorHex = active ? "#38ef7d" : "#94a3b8";
+                label.text = $"<color={colorHex}><b>{text}</b></color>";
+            }
         }
 
         public static WristUIController CreateWristUI(Transform wristAnchor, Vector3? initialPos = null, Vector3? initialRotEuler = null)
@@ -386,24 +399,24 @@ namespace LOG8704.UI
             moveHeader.color = new Color(0.96f, 0.62f, 0.04f);
 
             Vector2 cardSize = new Vector2(128f, 90f);
-            var (wBtn, wBg, wIcon, wLed) = CreateIconCard(panelObj.transform, "Card_Walk", new Vector2(-138f, 90f), cardSize);
-            var (tBtn, tBg, tIcon, tLed) = CreateIconCard(panelObj.transform, "Card_Teleport", new Vector2(0f, 90f), cardSize);
-            var (dBtn, dBg, dIcon, dLed) = CreateIconCard(panelObj.transform, "Card_Dash", new Vector2(138f, 90f), cardSize);
+            var (wBtn, wBg, wIcon, wLed, wTxt) = CreateIconCard(panelObj.transform, "Card_Walk", new Vector2(-138f, 90f), cardSize, "CONTINU");
+            var (tBtn, tBg, tIcon, tLed, tTxt) = CreateIconCard(panelObj.transform, "Card_Teleport", new Vector2(0f, 90f), cardSize, "TÉLÉPORT");
+            var (dBtn, dBg, dIcon, dLed, dTxt) = CreateIconCard(panelObj.transform, "Card_Dash", new Vector2(138f, 90f), cardSize, "DASH (0.2s)");
 
-            controller.m_WalkButton = wBtn; controller.m_WalkCardBg = wBg; controller.m_WalkIconImg = wIcon; controller.m_WalkLedDot = wLed;
-            controller.m_TeleportButton = tBtn; controller.m_TeleportCardBg = tBg; controller.m_TeleportIconImg = tIcon; controller.m_TeleportLedDot = tLed;
-            controller.m_DashButton = dBtn; controller.m_DashCardBg = dBg; controller.m_DashIconImg = dIcon; controller.m_DashLedDot = dLed;
+            controller.m_WalkButton = wBtn; controller.m_WalkCardBg = wBg; controller.m_WalkIconImg = wIcon; controller.m_WalkLedDot = wLed; controller.m_WalkStatusText = wTxt;
+            controller.m_TeleportButton = tBtn; controller.m_TeleportCardBg = tBg; controller.m_TeleportIconImg = tIcon; controller.m_TeleportLedDot = tLed; controller.m_TeleportStatusText = tTxt;
+            controller.m_DashButton = dBtn; controller.m_DashCardBg = dBg; controller.m_DashIconImg = dIcon; controller.m_DashLedDot = dLed; controller.m_DashStatusText = dTxt;
 
             var optHeader = CreateTMPText(panelObj.transform, "OptHeader", "OPTIONS DE CONFORT & ROTATION", 13f, FontStyles.Bold, new Vector2(0f, 28f), new Vector2(430f, 20f));
             optHeader.color = new Color(0.96f, 0.62f, 0.04f);
 
-            var (bBtn, bBg, bIcon, bLed) = CreateIconCard(panelObj.transform, "Card_Blink", new Vector2(-138f, -40f), cardSize);
-            var (vBtn, vBg, vIcon, vLed) = CreateIconCard(panelObj.transform, "Card_Vignette", new Vector2(0f, -40f), cardSize);
-            var (rBtn, rBg, rIcon, rLed) = CreateIconCard(panelObj.transform, "Card_Turn", new Vector2(138f, -40f), cardSize);
+            var (bBtn, bBg, bIcon, bLed, bTxt) = CreateIconCard(panelObj.transform, "Card_Blink", new Vector2(-138f, -40f), cardSize, "BLINK: ON");
+            var (vBtn, vBg, vIcon, vLed, vTxt) = CreateIconCard(panelObj.transform, "Card_Vignette", new Vector2(0f, -40f), cardSize, "OEILLÈRE: ON");
+            var (rBtn, rBg, rIcon, rLed, rTxt) = CreateIconCard(panelObj.transform, "Card_Turn", new Vector2(138f, -40f), cardSize, "SNAP 45°");
 
-            controller.m_BlinkButton = bBtn; controller.m_BlinkCardBg = bBg; controller.m_BlinkIconImg = bIcon; controller.m_BlinkLedDot = bLed;
-            controller.m_VignetteButton = vBtn; controller.m_VignetteCardBg = vBg; controller.m_VignetteIconImg = vIcon; controller.m_VignetteLedDot = vLed;
-            controller.m_TurnButton = rBtn; controller.m_TurnCardBg = rBg; controller.m_TurnIconImg = rIcon; controller.m_TurnLedDot = rLed;
+            controller.m_BlinkButton = bBtn; controller.m_BlinkCardBg = bBg; controller.m_BlinkIconImg = bIcon; controller.m_BlinkLedDot = bLed; controller.m_BlinkStatusText = bTxt;
+            controller.m_VignetteButton = vBtn; controller.m_VignetteCardBg = vBg; controller.m_VignetteIconImg = vIcon; controller.m_VignetteLedDot = vLed; controller.m_VignetteStatusText = vTxt;
+            controller.m_TurnButton = rBtn; controller.m_TurnCardBg = rBg; controller.m_TurnIconImg = rIcon; controller.m_TurnLedDot = rLed; controller.m_TurnStatusText = rTxt;
 
             controller.m_GlanceHintText = CreateTMPText(panelObj.transform, "GlanceHint", "Tourner le poignet vers soi pour ouvrir • [M] Touche Desktop", 11f, FontStyles.Italic, new Vector2(0f, -128f), new Vector2(430f, 20f));
             controller.m_GlanceHintText.color = new Color(0.45f, 0.55f, 0.65f);
@@ -411,7 +424,7 @@ namespace LOG8704.UI
             return controller;
         }
 
-        private static (Button, Image, Image, Image) CreateIconCard(Transform parent, string name, Vector2 pos, Vector2 size)
+        private static (Button, Image, Image, Image, TMP_Text) CreateIconCard(Transform parent, string name, Vector2 pos, Vector2 size, string initialLabel)
         {
             var cardObj = new GameObject(name);
             cardObj.transform.SetParent(parent, false);
@@ -429,7 +442,7 @@ namespace LOG8704.UI
             var iconObj = new GameObject("Icon");
             iconObj.transform.SetParent(cardObj.transform, false);
             var iconRect = iconObj.AddComponent<RectTransform>();
-            iconRect.anchoredPosition = Vector2.zero;
+            iconRect.anchoredPosition = new Vector2(0f, 8f);
             iconRect.sizeDelta = new Vector2(50f, 50f);
 
             var iconImg = iconObj.AddComponent<Image>();
@@ -449,7 +462,21 @@ namespace LOG8704.UI
             ledImg.color = new Color(0.25f, 0.30f, 0.38f, 0.8f);
             ledImg.raycastTarget = false;
 
-            return (btn, bgImg, iconImg, ledImg);
+            var labelObj = new GameObject("Label");
+            labelObj.transform.SetParent(cardObj.transform, false);
+            var labelRect = labelObj.AddComponent<RectTransform>();
+            labelRect.anchoredPosition = new Vector2(0f, -28f);
+            labelRect.sizeDelta = new Vector2(136f, 24f);
+
+            var label = labelObj.AddComponent<TextMeshProUGUI>();
+            label.text = initialLabel;
+            label.fontSize = 12f;
+            label.fontStyle = FontStyles.Bold;
+            label.alignment = TextAlignmentOptions.Center;
+            label.color = new Color(0.60f, 0.68f, 0.76f, 0.85f);
+            label.raycastTarget = false;
+
+            return (btn, bgImg, iconImg, ledImg, label);
         }
 
         private static TMP_Text CreateTMPText(Transform parent, string name, string text, float fontSize, FontStyles style, Vector2 anchoredPos, Vector2 size)

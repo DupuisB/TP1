@@ -1,27 +1,33 @@
-# LOG8704 - TP1 : Simulation Immersive de Locomotion en Réalité Virtuelle
+# LOG8704 - TP1 : Développement pour Quest 3
 
-Prototype de laboratoire expérimental de déplacement en réalité virtuelle pour **Meta Quest 3**, développé dans le cadre du cours LOG8704 (Polytechnique Montréal).
+TP1 du cours LOG8704 (Polytechnique Montréal).
 
-Conçu selon l'architecture standardisée **OpenXR** avec **Unity XR Interaction Toolkit (XRI 3.5.1)**, **URP 17.3.0** et **Unity 6 (6000.3.22f1)**.
+Application simple pour Meta Quest 3 dévéloppé dans Unity en utilisant OpenXR. Le but est de tester plusieurs méthodes de locomotion et de navigation en VR, avec des méthodes de mitigation de la cinétose.
 
 ---
 
-## 🚀 Scène de Démarrage & Structure du Projet
+## Prérequis
 
-* **Scène à compiler / lancer (Scene 0)** : `Assets/Synty/PolygonStarter/Scenes/Début.unity`
+Une fois le projet cloné, il est nécéssaire d'installer le package Synty Polygon Starter Pack. C'est possible depuis Synty -> Package Helper -> Install packages dans la barre de menu.
+
+> Note: il est possible de vérifier l'installation dans le package manager de Unity.
+
+## Présentation du projet & Scènes
+
+Le joueur commence dans une petite salle d'entraînement où il apprend à utiliser le menu de poignet, la téléportation Blink, le dash et la marche continue avec vignette. Après avoir complété le tutoriel, un portail vers une scène extérieure plus grande est déverrouillé.
+
+* **Scène à compiler / lancer (Scene 0)** : `Assets/Synty/PolygonStarter/Scenes/Debut.unity`
 * **Scène principale d'exploration (Scene 1)** : `Assets/Synty/PolygonStarter/Scenes/Demo.unity`
 * **Scène de calibration/backup (Scene 2, désactivée)** : `Assets/Scenes/TP1_TestArena.unity`
-
-L'application démarre directement dans le **Centre d'entraînement VR (`Début.unity`)**, une salle sécurisée inspirée de *First Encounters*. Le joueur est guidé par un tableau de bord holographique interactif à travers un tutoriel en 5 étapes avant que le portail vers la ville (`Demo.unity`) ne se déverrouille.
 
 ---
 
 ## 🥽 Matériel & Environnements de Test
 
-* **Casque VR cible** : **Meta Quest 3** (Standalone Android / Horizon OS via OpenXR Loader).
+* **Meta Quest 3** en buildant l'apk.
 * **Simulateur Desktop** : **Unity XR Device Simulator** (`com.unity.xr.interaction.toolkit`) + Raccourcis clavier direct pour tests rapides sans casque.
 * **Environnements testés** :
-  1. *Intérieur / Entraînement (`Début.unity`)* : Éclairage d'ambiance doux, surfaces planes, salle d'acclimatation.
+  1. *Intérieur / Entraînement (`Debut.unity`)* : Éclairage d'ambiance doux, surfaces planes, salle d'acclimatation.
   2. *Extérieur Urbain (`Demo.unity`)* : Ville 3D complète (Synty Polygon) avec rues, trottoirs, caisses, toits et plateformes surélevées.
   3. *Arène de Contrôle (`TP1_TestArena.unity`)* : Arène fermée standardisée avec obstacles infranchissables, plateformes accessibles et piédestal d'interaction.
 
@@ -68,7 +74,7 @@ Pour tester immédiatement dans l'éditeur sans casque :
 
 ---
 
-## 🎓 Parcours Pédagogique (Salle Début)
+## 🎓 Parcours Pédagogique (Salle Debut)
 
 1. **Étape 1 : Menu de poignet** — Le joueur lève son poignet ou presse `[M]` pour découvrir l'interface holographique.
 2. **Étape 2 : Téléportation & Blink** — Le joueur vise le socle lumineux cyan au centre de la salle et se téléporte dessus.
@@ -82,5 +88,5 @@ Pour tester immédiatement dans l'éditeur sans casque :
 
 1. Dans Unity Editor, ouvrir `File ▸ Build Settings`.
 2. Sélectionner la plateforme **Android**.
-3. Vérifier que `Début.unity` est en tête (Index 0) et `Demo.unity` en second (Index 1).
+3. Vérifier que `Debut.unity` est en tête (Index 0) et `Demo.unity` en second (Index 1).
 4. Cliquer sur **Build And Run** avec le Quest 3 branché en USB (Débogage USB activé).

@@ -118,55 +118,6 @@ namespace LOG8704.Locomotion
                 m_CurtainRenderer.SetPropertyBlock(m_PropertyBlock);
             }
 
-            // Proximity check: triggers transition when player walks or dashes through the doorway volume
-            if (isActiveAndEnabled && !m_IsTransitioning)
-            {
-                CheckWalkThroughProximity();
-            }
-        }
-
-        private void CheckWalkThroughProximity()
-        {
-            if (string.IsNullOrEmpty(m_TargetSceneName))
-                return;
-
-            Vector3 testPos = Vector3.zero;
-            bool found = false;
-
-            var cam = Camera.main;
-            if (cam == null)
-            {
-                var camGo = GameObject.FindWithTag("MainCamera");
-                if (camGo != null) cam = camGo.GetComponent<Camera>();
-            }
-
-            if (cam != null)
-            {
-                testPos = cam.transform.position;
-                found = true;
-            }
-            else
-            {
-                var cc = FindFirstObjectByType<CharacterController>();
-                if (cc != null)
-                {
-                    testPos = cc.transform.position + Vector3.up * 1.0f;
-                    found = true;
-                }
-            }
-
-            if (!found) return;
-
-            // Transform world position to portal local space
-            Vector3 localPos = transform.InverseTransformPoint(testPos);
-
-            // Door opening volume: width 1.0m (X +/- 0.55m), height 2.1m (Y -0.2m to 2.4m), depth 0.6m (Z +/- 0.60m)
-            if (Mathf.Abs(localPos.x) <= 0.55f &&
-                Mathf.Abs(localPos.z) <= 0.60f &&
-                localPos.y >= -0.2f && localPos.y <= 2.4f)
-            {
-                TriggerTransition();
-            }
         }
 
         /// <summary>
@@ -248,7 +199,7 @@ namespace LOG8704.Locomotion
                     return;
                 }
 
-                // 2. Search through build settings scenes by normalized name to handle Unicode accents (e.g. Début)
+                // 2. Search through build settings scenes by normalized name to handle Unicode accents (e.g. Debut)
                 int sceneCount = SceneManager.sceneCountInBuildSettings;
                 for (int i = 0; i < sceneCount; i++)
                 {
@@ -295,18 +246,4 @@ namespace LOG8704.Locomotion
         }
     }
 
-    /// <summary>
-    /// Forwards PhysX trigger events from the child Walk_Trigger volume to the portal component.
-    /// </summary>
-    [AddComponentMenu("")]
-    public class SceneTeleportPortalTriggerBridge : MonoBehaviour
-    {
-        public SceneTeleportPortal portal;
-
-        private void OnTriggerEnter(Collider other)
-        {
-            if (portal != null)
-                portal.OnWalkTriggerEnter(other);
-        }
-    }
 }

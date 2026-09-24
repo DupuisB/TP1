@@ -30,7 +30,7 @@ namespace LOG8704.Editor
         private const string TargetSceneDir = "Assets/Scenes";
         public const string TargetScenePath = "Assets/Scenes/TP1_TestArena.unity";
         public const string SyntyScenePath = "Assets/Synty/PolygonStarter/Scenes/Demo.unity";
-        public const string DebutScenePath = "Assets/Synty/PolygonStarter/Scenes/Début.unity";
+        public const string DebutScenePath = "Assets/Synty/PolygonStarter/Scenes/Debut.unity";
         private const string MaterialsDir = "Assets/Materials";
         private const string XrOriginPrefabPath = "Assets/Samples/XR Interaction Toolkit/3.5.1/Starter Assets/Prefabs/XR Origin (XR Rig).prefab";
         private const string TunnelingVignettePrefabPath = "Assets/Samples/XR Interaction Toolkit/3.5.1/Starter Assets/TunnelingVignette/TunnelingVignette.prefab";
@@ -321,10 +321,10 @@ namespace LOG8704.Editor
             var oldDebutPortal = GameObject.Find("Portal_To_Debut");
             if (oldDebutPortal != null) UnityEngine.Object.DestroyImmediate(oldDebutPortal);
 
-            // 6. Setup In-World Portal to Début (cleanly positioned in open area at spawn)
+            // 6. Setup In-World Portal to Debut (cleanly positioned in open area at spawn)
             CreateScenePortal(
                 "Portal_To_Debut",
-                "Début",
+                "Debut",
                 new Vector3(-1.2f, 0.05f, 8.0f),
                 Quaternion.Euler(0f, 30f, 0f),
                 new Color(0.1f, 0.75f, 1f, 1f),
@@ -336,7 +336,7 @@ namespace LOG8704.Editor
             EditorSceneManager.SaveScene(scene, SyntyScenePath);
             Debug.Log($"[TP1ArenaBuilder] Scene successfully saved to {SyntyScenePath}");
 
-            // 8. Register Demo & Début in EditorBuildSettings
+            // 8. Register Demo & Debut in EditorBuildSettings
             UpdateBuildSettingsForDemoAndDebut();
 
             AssetDatabase.SaveAssets();
@@ -1280,17 +1280,17 @@ namespace LOG8704.Editor
                 }
             }
             EditorBuildSettings.scenes = scenes.ToArray();
-            Debug.Log("[TP1ArenaBuilder] Configured EditorBuildSettings: Scene 0 = Début (enabled), Scene 1 = Demo (enabled).");
+            Debug.Log("[TP1ArenaBuilder] Configured EditorBuildSettings: Scene 0 = Debut (enabled), Scene 1 = Demo (enabled).");
         }
 
-        [MenuItem("LOG8704/Setup Début Scene for VR")]
+        [MenuItem("LOG8704/Setup Debut Scene for VR")]
         public static void SetupDebutScene()
         {
-            Debug.Log($"[TP1ArenaBuilder] Starting VR setup for Début scene ({DebutScenePath})...");
+            Debug.Log($"[TP1ArenaBuilder] Starting VR setup for Debut scene ({DebutScenePath})...");
 
             if (!File.Exists(DebutScenePath))
             {
-                Debug.LogError($"[TP1ArenaBuilder] Début scene not found at {DebutScenePath}!");
+                Debug.LogError($"[TP1ArenaBuilder] Debut scene not found at {DebutScenePath}!");
                 return;
             }
 
@@ -1410,7 +1410,7 @@ namespace LOG8704.Editor
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, DebutScenePath);
-            Debug.Log($"[TP1ArenaBuilder] Début scene successfully saved with 5-step tutorial board, target pad, and gated portal to Demo.");
+            Debug.Log($"[TP1ArenaBuilder] Debut scene successfully saved with 5-step tutorial board, target pad, and gated portal to Demo.");
 
             UpdateBuildSettingsForDemoAndDebut();
 
@@ -1489,14 +1489,6 @@ namespace LOG8704.Editor
                 frame.name = "Arch_Frame";
                 frame.transform.localPosition = new Vector3(-0.654f, 0f, -0.086f);
                 frame.transform.localRotation = Quaternion.identity;
-
-                // MeshCollider for exact visual/physical mesh contour
-                var mf = frame.GetComponent<MeshFilter>();
-                if (mf != null && mf.sharedMesh != null)
-                {
-                    var meshCol = frame.AddComponent<MeshCollider>();
-                    meshCol.sharedMesh = mf.sharedMesh;
-                }
 
                 // Solid BoxColliders for left & right pillars and top lintel to ensure 100% impenetrable VR collisions
                 var leftPillar = frame.AddComponent<BoxCollider>();

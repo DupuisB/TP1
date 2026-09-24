@@ -2824,7 +2824,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: ""
+  m_text: "SNAP 45\xB0"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -3418,9 +3418,6 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 1755429121576396, guid: 4a0ab548b1b39cf4b8b48726d5f4fbfe, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 85078392}
-    - targetCorrespondingSourceObject: {fileID: 1755429121576396, guid: 4a0ab548b1b39cf4b8b48726d5f4fbfe, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 85078391}
     - targetCorrespondingSourceObject: {fileID: 1755429121576396, guid: 4a0ab548b1b39cf4b8b48726d5f4fbfe, type: 3}
       insertIndex: -1
@@ -3502,28 +3499,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.22, y: 2.1, z: 0.22}
   m_Center: {x: 0.08, y: 1.05, z: 0.086}
---- !u!64 &85078392
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 85078388}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300000, guid: 7ce54f0ead747e44e8ca2778de346dd6, type: 3}
 --- !u!1 &85596572 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1407229615668976, guid: 1ce022d65e1e7b84d9e5ae4a479c39ba, type: 3}
@@ -8073,7 +8048,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: ""
+  m_text: CONTINU
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -22554,26 +22529,32 @@ MonoBehaviour:
   m_WalkCardBg: {fileID: 1388036914}
   m_WalkIconImg: {fileID: 1504008795}
   m_WalkLedDot: {fileID: 36655724}
+  m_WalkStatusText: {fileID: 232101706}
   m_TeleportButton: {fileID: 1928277831}
   m_TeleportCardBg: {fileID: 1928277832}
   m_TeleportIconImg: {fileID: 517517633}
   m_TeleportLedDot: {fileID: 1220078011}
+  m_TeleportStatusText: {fileID: 1016626101}
   m_DashButton: {fileID: 254574313}
   m_DashCardBg: {fileID: 254574314}
   m_DashIconImg: {fileID: 948815720}
   m_DashLedDot: {fileID: 14586186}
+  m_DashStatusText: {fileID: 1201570596}
   m_BlinkButton: {fileID: 654568730}
   m_BlinkCardBg: {fileID: 654568731}
   m_BlinkIconImg: {fileID: 443264406}
   m_BlinkLedDot: {fileID: 1273235530}
+  m_BlinkStatusText: {fileID: 1460378140}
   m_VignetteButton: {fileID: 539209433}
   m_VignetteCardBg: {fileID: 539209434}
   m_VignetteIconImg: {fileID: 382264020}
   m_VignetteLedDot: {fileID: 1370078026}
+  m_VignetteStatusText: {fileID: 1093066536}
   m_TurnButton: {fileID: 159902545}
   m_TurnCardBg: {fileID: 159902546}
   m_TurnIconImg: {fileID: 571258188}
   m_TurnLedDot: {fileID: 96644011}
+  m_TurnStatusText: {fileID: 63534087}
   m_GlanceHintText: {fileID: 667948846}
 --- !u!114 &750362358
 MonoBehaviour:
@@ -29352,7 +29333,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: ""
+  m_text: "T\xC9L\xC9PORT"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -29788,7 +29769,7 @@ MonoBehaviour:
   m_Teleporting:
     m_PersistentCalls:
       m_Calls: []
-  m_TargetSceneName: "D\xE9but"
+  m_TargetSceneName: Debut
   m_FadeDuration: 0.25
   m_EnableHaptics: 1
   m_CurtainRenderer: {fileID: 720787979}
@@ -31387,7 +31368,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: ""
+  m_text: "OEILL\xC8RE: ON"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -33863,7 +33844,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: ""
+  m_text: DASH (0.2s)
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -33992,7 +33973,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1217154003}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 1328754022}
+  m_Script: {fileID: 11500000, guid: 874cfb9ad8f6460c95b4ac3fa9b52f1a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LOG8704.Locomotion.SceneTeleportPortalTriggerBridge
   portal: {fileID: 1036476388}
@@ -37498,21 +37479,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!115 &1328754022
-MonoScript:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  serializedVersion: 7
-  m_DefaultReferences: {}
-  m_Icon: {fileID: 0}
-  m_Type: 0
-  m_ExecutionOrder: 0
-  m_ClassName: SceneTeleportPortalTriggerBridge
-  m_Namespace: LOG8704.Locomotion
-  m_AssemblyName: Assembly-CSharp
 --- !u!1001 &1340051366
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -42085,7 +42051,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: ""
+  m_text: 'BLINK: ON'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
