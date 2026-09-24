@@ -901,7 +901,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: GAUNTLET OS // LOG8704
+  m_text: ""
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -5865,7 +5865,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'BLINK: ON'
+  m_text: ""
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -6594,33 +6594,26 @@ MonoBehaviour:
   m_WalkCardBg: {fileID: 364974906}
   m_WalkIconImg: {fileID: 1720422280}
   m_WalkLedDot: {fileID: 439347414}
-  m_WalkStatusText: {fileID: 1236307701}
   m_TeleportButton: {fileID: 1815343451}
   m_TeleportCardBg: {fileID: 1815343452}
   m_TeleportIconImg: {fileID: 394097853}
   m_TeleportLedDot: {fileID: 2127934260}
-  m_TeleportStatusText: {fileID: 755045626}
   m_DashButton: {fileID: 1499748913}
   m_DashCardBg: {fileID: 1499748914}
   m_DashIconImg: {fileID: 328161756}
   m_DashLedDot: {fileID: 963468625}
-  m_DashStatusText: {fileID: 1970289729}
   m_BlinkButton: {fileID: 349688821}
   m_BlinkCardBg: {fileID: 349688822}
   m_BlinkIconImg: {fileID: 2108047074}
   m_BlinkLedDot: {fileID: 1149198855}
-  m_BlinkStatusText: {fileID: 413712439}
   m_VignetteButton: {fileID: 965349983}
   m_VignetteCardBg: {fileID: 965349984}
   m_VignetteIconImg: {fileID: 734155856}
   m_VignetteLedDot: {fileID: 580899473}
-  m_VignetteStatusText: {fileID: 477605521}
   m_TurnButton: {fileID: 1041603044}
   m_TurnCardBg: {fileID: 1041603045}
   m_TurnIconImg: {fileID: 442660550}
   m_TurnLedDot: {fileID: 1650164153}
-  m_TurnStatusText: {fileID: 847382625}
-  m_HudSummaryText: {fileID: 1827211079}
   m_GlanceHintText: {fileID: 1905338884}
 --- !u!114 &469835188
 MonoBehaviour:
@@ -6950,7 +6943,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "OEILL\xC8RE: ON"
+  m_text: ""
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -10812,7 +10805,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "T\xC9L\xC9PORT"
+  m_text: ""
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -11967,7 +11960,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "SNAP 45\xB0"
+  m_text: ""
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -15529,7 +15522,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "CONTR\xD4LE LOCOMOTION & CONFORT VR"
+  m_text: ""
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -19007,7 +19000,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: CONTINU
+  m_text: ""
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -29040,7 +29033,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "MODE: Teleport \u2022 BLINK: ON \u2022 VIGNETTE: ON \u2022 ROTATION: Snap"
+  m_text: ""
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -30902,7 +30895,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: DASH (0.2s)
+  m_text: ""
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
