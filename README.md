@@ -4,6 +4,8 @@ TP1 du cours LOG8704 (Polytechnique Montréal).
 
 Application simple pour Meta Quest 3 dévéloppé dans Unity en utilisant OpenXR. Le but est de tester plusieurs méthodes de locomotion et de navigation en VR, avec des méthodes de mitigation de la cinétose.
 
+> La méthode de test testé de bout en bout est le build sur Meta Quest 3. Le simulateur Unity XR Device Simulator est utilisé pour des tests rapides sans casque, mais certaines fonctionnalités n'ont pas été téstés de manière fiable.
+
 ---
 
 ## Prérequis
@@ -22,31 +24,28 @@ Le joueur commence dans une petite salle d'entraînement où il apprend à utili
 
 ---
 
-## 🥽 Matériel & Environnements de Test
+## Environnements de Test
 
-* **Meta Quest 3** en buildant l'apk.
-* **Simulateur Desktop** : **Unity XR Device Simulator** (`com.unity.xr.interaction.toolkit`) + Raccourcis clavier direct pour tests rapides sans casque.
-* **Environnements testés** :
-  1. *Intérieur / Entraînement (`Debut.unity`)* : Éclairage d'ambiance doux, surfaces planes, salle d'acclimatation.
-  2. *Extérieur Urbain (`Demo.unity`)* : Ville 3D complète (Synty Polygon) avec rues, trottoirs, caisses, toits et plateformes surélevées.
-  3. *Arène de Contrôle (`TP1_TestArena.unity`)* : Arène fermée standardisée avec obstacles infranchissables, plateformes accessibles et piédestal d'interaction.
+* **Meta Quest 3** en buildant l'apk. C'est la méthode où nous avons tout testé et validé.
+* **Meta XR Device Simulator** Fonctionne, mais nos application meta simulator crashent pour des raisons indépendantes, donc a pas pu absolument tout tester de manière fiable.
+* **Unity XR Device Simulator**  Raccourcis clavier direct pour tests rapides sans casque directement dans unity.
 
 ---
 
-## 🕹️ Tableau des Contrôles
+## Contrôles
 
 ### 1. Contrôleurs VR (Meta Quest 3 Touch Plus)
 
 | Contrôleur / Bouton | Rôle | Action & Comportement |
 | :--- | :--- | :--- |
-| **Joystick Gauche** | **Locomotion Exclusif** | Translation pure (aucun virage). Marche continue (Smooth Move), visée et relâchement de téléportation, ou dash directionnel. |
-| **Joystick Droit** | **Vue / Rotation Exclusif** | Virage par crans (Snap Turn 45°) ou virage fluide (Continuous Turn 60°/s). Aucune translation. |
-| **Poignet Gauche (Smartwatch)** | **Menu Holographique** | Glance-based : tournez votre poignet dorsal vers vos yeux pour faire apparaître le menu confort. |
+| **Joystick Gauche** | **Locomotion Exclusif** | Translation pure (aucunvirage ). Marche continue (Smooth Move), visée et relâchement de téléportation, ou dash directionnel. |
+| **Joystick Droit** | **Vue / Rotation Exclusif** | Snap Turn 45° ou Smooth Turn. |
+| **Poignet Gauche (Smartwatch)** | **Menu Holographique** | Tournez votre poignet gauche vers vos yeux pour faire apparaître le menu. (comme si vous regardiez une montre) |
 | **Index Droit (Trigger / Gâchette)** | **Interaction Directe & Ray** | Appuyer sur les boutons du menu smartwatch, attraper les objets ou viser le portail. |
 
 ### 2. Raccourcis Simulateur / Clavier Desktop (Unity Editor)
 
-Pour tester immédiatement dans l'éditeur sans casque :
+Pour tester immédiatement dans l'éditeur sans casque (les raccourcis ne marchent par sur certains ordinateurs de manière inconnu) :
 
 | Touche Clavier | Action |
 | :--- | :--- |
@@ -64,7 +63,7 @@ Pour tester immédiatement dans l'éditeur sans casque :
 
 ---
 
-## 🛡️ Systèmes de Prévention de la Cinétose
+## Systèmes de Prévention de la Cinétose
 
 1. **Isolation stricte des joysticks** : La translation est assignée à 100% au joystick gauche, et la rotation au joystick droit. Aucune interférence croisée.
 2. **Téléportation par Blink** : Fondu au noir rapide (0.15s) géré par `ScreenFadeCanvas` sur la caméra principale, éliminant tout inconfort visuel lors des sauts spatiaux.
@@ -74,17 +73,17 @@ Pour tester immédiatement dans l'éditeur sans casque :
 
 ---
 
-## 🎓 Parcours Pédagogique (Salle Debut)
+## Tutoriel
 
-1. **Étape 1 : Menu de poignet** — Le joueur lève son poignet ou presse `[M]` pour découvrir l'interface holographique.
-2. **Étape 2 : Téléportation & Blink** — Le joueur vise le socle lumineux cyan au centre de la salle et se téléporte dessus.
-3. **Étape 3 : Translation Dash** — Le joueur teste le dash de 0.2s.
-4. **Étape 4 : Déplacement continu & Œillère** — Le joueur marche 3 mètres avec le joystick gauche en observant l'œillère périphérique.
-5. **Étape 5 : Portail Déverrouillé** — Le portail énergétique passe de l'orange (verrouillé) au vert émeraude (déverrouillé). Le joueur peut le traverser ou s'y téléporter pour explorer la ville `Demo.unity`.
+1. **Étape 1 : Menu de poignet** : Le joueur lève son poignet ou presse `[M]` pour découvrir l'interface holographique.
+2. **Étape 2 : Téléportation & Blink**: Le joueur vise le socle lumineux cyan au centre de la salle et se téléporte dessus.
+3. **Étape 3 : Translation Dash**: Le joueur teste le dash de 0.2s.
+4. **Étape 4 : Déplacement continu & Œillère**: Le joueur marche 3 mètres avec le joystick gauche en observant l'œillère périphérique.
+5. **Étape 5 : Portail Déverrouillé**: Le portail énergétique passe de l'orange (verrouillé) au vert émeraude (déverrouillé). Le joueur peut le traverser ou s'y téléporter pour explorer la ville `Demo.unity`.
 
 ---
 
-## 📦 Compilation & Déploiement Quest 3
+## Compilation pour Quest 3
 
 1. Dans Unity Editor, ouvrir `File ▸ Build Settings`.
 2. Sélectionner la plateforme **Android**.
